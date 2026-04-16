@@ -68,7 +68,7 @@ const groq = createGroq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
-// عميل علي بابا (يدعم واجهة OpenAI)
+// عميل علي بابا (يدعم واجهة OpenAI للمحادثات والصور فقط)
 const alibabaClient = new OpenAI({
   apiKey: process.env.DASHSCOPE_API_KEY,
   baseURL: process.env.DASHSCOPE_BASE_URL || "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
@@ -83,8 +83,8 @@ export async function generateAIResponse(
   const modelInfo = chatModels[modelId as ModelType] || chatModels.llama3;
   const persona = isUncensored ? personas.uncensored : personas.thinker;
 
-  // دعم نماذج علي بابا (Qwen)
-  if (modelInfo.provider === "alibaba") {
+  // دعم نماذج علي بابا (Qwen) - للمحادثات فقط
+  if (modelInfo.provider === "alibaba" || modelInfo.provider === "qwen") {
     const response = await alibabaClient.chat.completions.create({
       model: modelInfo.id,
       messages: [
@@ -96,21 +96,6 @@ export async function generateAIResponse(
       ],
       temperature: 0.7,
       max_tokens: 4096,
-    });
-    return response.choices[0].message.content || "";
-  }
-
-  // دعم Qwen القديم (للتوافق)
-  if (modelInfo.provider === "qwen") {
-    const response = await alibabaClient.chat.completions.create({
-      model: modelInfo.id,
-      messages: [
-        { role: "system", content: persona.prompt },
-        ...messages.map((m: any) => ({
-          role: m.role,
-          content: m.content,
-        })),
-      ],
     });
     return response.choices[0].message.content || "";
   }
@@ -128,45 +113,75 @@ export async function generateAIResponse(
   return text;
 }
 
-// دالة مساعدة لتوليد فيديو بـ Wan
+// ✅ دالة توليد فيديو بـ Wan باستخدام fetch() الصحيح
 export async function generateWanVideo(prompt: string, duration: number = 5, resolution: string = "720p", withAudio: boolean = true) {
-  if (!process.env.DASHSCOPE_API_KEY) {
+  const apiKey = process.env.DASHSCOPE_API_KEY;
+  const baseURL = process.env.DASHSCOPE_BASE_URL || "https://dashscope-intl.aliyuncs.com/compatible-mode/v1";
+
+  if (!apiKey) {
     throw new Error("مفتاح DASHSCOPE_API_KEY غير موجود");
   }
 
-  // بدء مهمة التوليد
-  const task = await alibabaClient.post("/videos/generations", {
-    model: "wan2.7-t2v",
-    prompt: prompt,
-    duration: duration,
-    resolution: resolution,
-    with_audio: withAudio,
+  // 1️⃣ بدء مهمة التوليد باستخدام fetch()
+  const startResponse = await fetch(`${baseURL}/videos/generations`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "wan2.7-t2v",
+      prompt: prompt,
+      duration: duration,
+      resolution: resolution,
+      with_audio: withAudio,
+    }),
   });
 
-  const taskId = task.task_id;
+  if (!startResponse.ok) {
+    const errorData = await startResponse.json().catch(() => ({}));
+    throw new Error(`فشل بدء التوليد: ${errorData.message || startResponse.statusText}`);
+  }
 
-  // انتظار انتهاء المهمة (Polling)
-  for (let i = 0; i < 40; i++) {
-    await new Promise(resolve => setTimeout(resolve, 3000)); // 3 ثواني بين كل محاولة
+  const startData = await startResponse.json();
+  const taskId = startData.task_id || startData.id;
+
+  if (!taskId) {
+    throw new Error("لم يتم استلام task_id من الخادم");
+  }
+
+  // 2️⃣ انتظار انتهاء المهمة (Polling)
+  for (let i = 0; i < 40; i++) { // 40 محاولة × 3 ثواني = 120 ثانية كحد أقصى
+    await new Promise(resolve => setTimeout(resolve, 3000));
     
-    const status = await alibabaClient.get(`/videos/generations/${taskId}`);
+    const statusResponse = await fetch(`${baseURL}/videos/generations/${taskId}`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+      },
+    });
+
+    if (!statusResponse.ok) continue;
     
-    if (status.status === "succeeded") {
+    const statusData = await statusResponse.json();
+    const status = statusData.status || statusData.task_status;
+
+    if (status === "succeeded" || status === "COMPLETED") {
       return {
         success: true,
-        video_url: status.output?.video_url,
-        thumbnail: status.output?.cover_url,
-        duration: status.output?.duration,
+        video_url: statusData.output?.video_url || statusData.results?.[0]?.url,
+        thumbnail: statusData.output?.cover_url,
+        duration: statusData.output?.duration,
       };
-    } else if (status.status === "failed") {
-      throw new Error(`فشل التوليد: ${status.message || "خطأ غير معروف"}`);
+    } else if (status === "failed" || status === "FAILED") {
+      throw new Error(`فشل التوليد: ${statusData.message || "خطأ غير معروف"}`);
     }
   }
 
   throw new Error("انتهت مهلة انتظار توليد الفيديو (120 ثانية)");
 }
 
-// دالة مساعدة لتوليد صورة بـ Qwen Image
+// ✅ دالة توليد صورة بـ Qwen Image (مصححة)
 export async function generateQwenImage(prompt: string, size: string = "1024x1024") {
   const response = await alibabaClient.images.generate({
     model: "qwen3-image",
@@ -175,8 +190,13 @@ export async function generateQwenImage(prompt: string, size: string = "1024x102
     n: 1,
   });
 
+  const url = response.data?.[0]?.url;
+  if (!url) {
+    throw new Error("لم يتم استلام رابط الصورة من الخادم");
+  }
+
   return {
-    url: response.data[0].url,
-    revised_prompt: response.data[0].revised_prompt,
+    url: url,
+    revised_prompt: response.data?.[0]?.revised_prompt,
   };
 }
