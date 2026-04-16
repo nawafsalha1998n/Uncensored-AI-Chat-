@@ -11,7 +11,7 @@
     "prisma:push": "prisma db push"
   },
   "dependencies": {
-    "next": "15.2.3",
+    "next": "15.2.8",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "@clerk/nextjs": "^5.7.5",
