@@ -1,9 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-
 type ModelCategory = "chat" | "image" | "video";
 
 interface ModelSelectorProps {
@@ -21,8 +17,7 @@ export default function ModelSelector({
   duration = 5,
   onDurationChange
 }: ModelSelectorProps) {
-  
-  // 📚 قوائم النماذج المحدثة
+
   const chatModels = [
     { id: "llama3", name: "🦙 Llama 3.3 (Groq)" },
     { id: "mixtral", name: "🌪️ Mixtral 8x7B (Groq)" },
@@ -51,25 +46,24 @@ export default function ModelSelector({
 
   return (
     <div className="space-y-4 p-4 bg-gray-900/50 rounded-xl border border-gray-700">
-      <Label className="text-gray-300">🔹 اختر النموذج</Label>
+      <label className="text-sm font-medium text-gray-300">🔹 اختر النموذج</label>
       
-      <Select value={selectedModel} onValueChange={onModelChange}>
-        <SelectTrigger className="w-full bg-gray-800 border-gray-600 text-white">
-          <SelectValue placeholder="اختر نموذجًا..." />
-        </SelectTrigger>
-        <SelectContent className="bg-gray-800 border-gray-600 text-white max-h-60">
-          {currentModels.map((m) => (
-            <SelectItem key={m.id} value={m.id} className="hover:bg-gray-700 focus:bg-gray-700">
-              {m.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <select
+        value={selectedModel}
+        onChange={(e) => onModelChange(e.target.value)}
+        className="w-full bg-gray-800 border border-gray-600 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+      >
+        {currentModels.map((m) => (
+          <option key={m.id} value={m.id}>
+            {m.name}
+          </option>
+        ))}
+      </select>
 
-      {/* ⏱️ خيار المدة (يظهر فقط لنماذج الفيديو) */}
+      {/* ⏱️ خيار المدة (يظهر فقط لنماذج الفيديو من علي بابا) */}
       {category === "video" && selectedModel.startsWith("wan2.7") && onDurationChange && (
         <div className="mt-3">
-          <Label className="text-gray-300 text-sm">🕒 مدة الفيديو</Label>
+          <label className="text-sm font-medium text-gray-300">🕒 مدة الفيديو</label>
           <div className="flex gap-2 mt-1">
             {[5, 10, 15].map((d) => (
               <button
