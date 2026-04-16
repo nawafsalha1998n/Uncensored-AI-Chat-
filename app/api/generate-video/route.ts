@@ -12,40 +12,87 @@ export async function POST(request: NextRequest) {
 
     const user = await getOrCreateUser();
 
-    // 1. استخدام Veo 3.1 Fast عبر Gemini API (Google AI Studio)
+    // 1. محاولة استخدام Veo 3.1 Fast عبر Gemini API (Google Cloud)
     if (model === "veo-3-1-fast" && process.env.GEMINI_API_KEY) {
       try {
-        // ملاحظة: تطبيق Veo 3.1 الفعلي عبر API يتطلب استخدام SDK الخاص بـ Google Generative AI
-        // هنا نقوم بمحاكاة الطلب أو استخدام fetch إذا كان الـ endpoint متاحاً مباشرة
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/veo-3.1-fast:generateVideo?key=${process.env.GEMINI_API_KEY}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            prompt: prompt,
-            videoOptions: { durationSeconds: 5 }
-          })
-        });
+        // استخدام Google Generative AI SDK
+        const { GoogleGenerativeAI } = await import("@google/generative-ai");
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+        // استخدام Vertex AI SDK للفيديو (الطريقة الصحيحة)
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/veo-3.1-fast:generateVideo?key=${process.env.GEMINI_API_KEY}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              displayName: "AI Generated Video",
+              model: "veo-3.1-fast",
+              generationConfig: {
+                duration: "5s",
+                resolution: "720p",
+              },
+              textToVideoConfig: {
+                text: prompt,
+              },
+            }),
+          }
+        );
 
         const data = await response.json();
-        
-        // في حال نجاح الطلب (هذا هيكل تقريبي للرد)
-        if (response.ok && data.videoUrl) {
-           await prisma.message.create({
+
+        // معالجة الرد
+        if (response.ok && data.video?.uri) {
+          const videoUrl = data.video.uri;
+          
+          await prisma.message.create({
             data: {
               role: "assistant",
-              content: "✅ تم توليد الفيديو بنجاح عبر Veo 3.1 Fast",
-              videoUrl: data.videoUrl,
-              chatId: "", 
+              content: "✅ تم توليد الفيديو بنجاح عبر Veo 3.1 Fast!",
+              videoUrl,
+              chatId: "",
             }
           });
-          return NextResponse.json({ videoUrl: data.videoUrl });
+
+          return NextResponse.json({ videoUrl, success: true });
         }
-      } catch (err) {
-        console.error("Veo 3.1 failed", err);
+
+        // إذا كان هناك خطأ في الرد
+        if (!response.ok) {
+          console.error("Veo 3.1 API Error:", data);
+          throw new Error(data.error?.message || "فشل طلب Veo 3.1");
+        }
+      } catch (err: any) {
+        console.error("Veo 3.1 Error:", err.message);
       }
     }
 
-    // 2. البديل: Fal.ai
+    // 2. البديل: Qwen Video (إذا توفر المفتاح)
+    if (model === "qwen-video" && process.env.QWEN_API_KEY) {
+      try {
+        const response = await fetch("https://dashscope.aliyuncs.com/api/v1/services/aigc/text2video/generation", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.QWEN_API_KEY}`,
+          },
+          body: JSON.stringify({
+            model: "qwen-video-generation",
+            input: { prompt },
+            parameters: { duration: 5 },
+          }),
+        });
+
+        const data = await response.json();
+        if (response.ok && data.output?.video_url) {
+          return NextResponse.json({ videoUrl: data.output.video_url });
+        }
+      } catch (err) {
+        console.error("Qwen Video failed", err);
+      }
+    }
+
+    // 3. البديل الأخير: Fal.ai
     if (process.env.FAL_AI_KEY) {
       const response = await fetch("https://fal.run/fal-ai/fast-video", {
         method: "POST",
@@ -65,7 +112,7 @@ export async function POST(request: NextRequest) {
             role: "assistant",
             content: "✅ تم توليد الفيديو بنجاح عبر Fal.ai",
             videoUrl,
-            chatId: "", 
+            chatId: "",
           }
         });
         return NextResponse.json({ videoUrl });
@@ -73,15 +120,18 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { 
-        error: "توليد الفيديو يتطلب مفتاح API صحيح (GEMINI_API_KEY أو FAL_AI_KEY).",
-        suggestion: "تأكد من إدراج المفاتيح في Vercel." 
-      }, 
-      { status: 403 }
+      {
+        error: "فشل توليد الفيديو. تأكد من إضافة GEMINI_API_KEY أو FAL_AI_KEY في Vercel.",
+        suggestion: "جرب إعادة المحاولة أو استخدم موديل صور بدلاً من الفيديو.",
+      },
+      { status: 503 }
     );
 
   } catch (error: any) {
     console.error("🚨 Video Generation Error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: error.message || "خطأ في توليد الفيديو" },
+      { status: 500 }
+    );
   }
 }
