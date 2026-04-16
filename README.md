@@ -1,165 +1,57 @@
-# 🤖 AI Uncensored Chat - دردشة ذكاء اصطناعي بدون قيود
+# 🤖 AI Uncensored Pro - دردشة ذكاء اصطناعي بدون قيود
 
 منصة متقدمة للدردشة مع الذكاء الاصطناعي وتوليد الصور والفيديوهات، مخصصة للبالغين فقط (+18). الموقع يسمح بالمحتوى الحساس والنقاشات غير المقيدة.
 
-## ✨ الميزات الرئيسية
+## ✨ الميزات الجديدة (التحديث الأخير)
+- **🎬 Veo 3.1 Fast**: دمج أحدث موديلات الفيديو من Google لتوليد مقاطع سينمائية.
+- **🖼️ Flux.1 Pro & SD3**: دعم موديلات الصور الأكثر تقدماً عبر Together.ai.
+- **👤 شخصيات الذكاء الاصطناعي**: اختر بين (المفكر، الخبير، العبقري، المرح) أو الوضع غير المقيد.
+- **📱 واجهة Sora2**: تصميم ثابت (Sticky) يسهل التصفح مع ميزة معاينة وتكبير الوسائط.
+- **📥 تحميل مباشر**: زر لتحميل الصور والفيديوهات المنشأة مباشرة لجهازك.
+- **📜 سجل المحادثات**: شريط جانبي لمتابعة وإدارة محادثاتك السابقة.
 
-- **💬 دردشة متقدمة**: استخدام نماذج Groq المتعددة (Llama 3.3 70B، Mixtral، Gemma 2)
-- **🖼️ توليد صور احترافية**: استخدام FLUX.1 من Together.ai (10 صور يومياً)
-- **🎬 توليد فيديوهات**: استخدام Fast Video من Fal.ai (3 فيديوهات يومياً)
-- **🔐 مصادقة آمنة**: تكامل كامل مع Clerk للمصادقة
-- **👤 التحقق من العمر**: نظام تحقق من أن المستخدم بالغ (18+)
-- **💾 حفظ المحادثات**: تخزين كامل لسجل المحادثات في قاعدة البيانات
-- **🎨 واجهة احترافية**: تصميم عصري وسلس مع Tailwind CSS
+## 🔑 دليل مفاتيح API (Environment Variables)
 
-## 🚀 البدء السريع
+يجب إضافة هذه المفاتيح في إعدادات **Vercel** ليعمل الموقع بكامل طاقته:
 
-### المتطلبات
+| الخدمة | الموقع لجلب المفتاح | المتغير في Vercel | الوظيفة |
+| :--- | :--- | :--- | :--- |
+| **Google Gemini** | [Google AI Studio](https://aistudio.google.com/) | `GEMINI_API_KEY` | فيديو (Veo 3.1) ودردشة متقدمة |
+| **Together.ai** | [together.ai](https://together.ai/) | `TOGETHER_API_KEY` | صور (Flux.1 Pro, SD3) |
+| **Fal.ai** | [fal.ai](https://fal.ai/) | `FAL_AI_KEY` | بديل فيديو وصور |
+| **Groq** | [Groq Console](https://console.groq.com/) | `GROQ_API_KEY` | دردشة سريعة جداً |
+| **Clerk** | [Clerk Dashboard](https://clerk.com/) | `CLERK_SECRET_KEY` | نظام تسجيل الدخول |
+| **Database** | **Vercel Postgres** | `DATABASE_URL` | حفظ السجل والوسائط |
 
-- Node.js 18+
-- pnpm أو npm
-- حساب Vercel (اختياري للنشر)
+### 💡 كيف تحصل على GEMINI_API_KEY لـ Veo 3.1؟
+1. اذهب إلى [Google AI Studio](https://aistudio.google.com/).
+2. اضغط على **"Get API key"** في القائمة الجانبية.
+3. قم بإنشاء مفتاح جديد (**Create API key in new project**).
+4. انسخ المفتاح وضعه في Vercel باسم `GEMINI_API_KEY`.
 
-### التثبيت
-
-```bash
-# استنساخ المستودع
-git clone https://github.com/nawafsalha1998n/Uncensored-AI-Chat-
-cd Uncensored-AI-Chat-
-
-# تثبيت التبعيات
-pnpm install
-
-# إنشاء ملف .env.local
-cp .env.example .env.local
-```
-
-### إضافة مفاتيح API
-
-قم بتحرير ملف `.env.local` وأضف المفاتيح التالية:
-
-```env
-# Clerk
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_key_here
-CLERK_SECRET_KEY=your_key_here
-
-# Groq (للدردشة)
-GROQ_API_KEY=your_key_here
-
-# Together.ai (للصور)
-TOGETHER_API_KEY=your_key_here
-
-# Fal.ai (للفيديوهات)
-FAL_AI_KEY=your_key_here
-
-# قاعدة البيانات
-DATABASE_URL=your_postgresql_url
-```
-
-### التشغيل المحلي
-
-```bash
-# تشغيل خادم التطوير
-pnpm dev
-
-# الدخول إلى http://localhost:3000
-```
-
-## 🔑 الحصول على مفاتيح API المجانية
-
-### 1. **Clerk** (المصادقة)
-- اذهب إلى [clerk.com](https://clerk.com)
-- أنشئ حساب جديد
-- أنشئ تطبيق جديد
-- انسخ `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` و `CLERK_SECRET_KEY`
-
-### 2. **Groq** (الدردشة النصية)
-- اذهب إلى [console.groq.com](https://console.groq.com)
-- سجل دخول أو أنشئ حساب
-- انتقل إلى "API Keys"
-- أنشئ مفتاح API جديد
-- **حد يومي**: 14,400 طلب يومياً (مجاني)
-
-### 3. **Together.ai** (توليد الصور)
-- اذهب إلى [together.ai](https://www.together.ai)
-- أنشئ حساب جديد
-- انتقل إلى "API Keys"
-- أنشئ مفتاح API جديد
-- **حد يومي**: 100 صورة يومياً (مجاني)
-
-### 4. **Fal.ai** (توليد الفيديوهات)
-- اذهب إلى [fal.ai](https://www.fal.ai)
-- أنشئ حساب جديد
-- انتقل إلى "API Keys"
-- أنشئ مفتاح API جديد
-- **حد يومي**: 20 فيديو يومياً (مجاني)
-
-### 5. **قاعدة البيانات** (PostgreSQL)
-- استخدم **Vercel Postgres** (مجاني):
-  - اذهب إلى [vercel.com](https://vercel.com)
-  - أنشئ مشروع جديد
-  - أضف قاعدة بيانات PostgreSQL
-  - انسخ رابط الاتصال
-
-- أو استخدم **Supabase** (مجاني):
-  - اذهب إلى [supabase.com](https://supabase.com)
-  - أنشئ مشروع جديد
-  - انسخ رابط الاتصال
-
-## 📊 حدود الاستخدام اليومية
-
-| الخدمة | الحد اليومي | الخطة |
-|--------|-----------|------|
-| الدردشة | 14,400 طلب | Groq مجاني |
-| الصور | 10 صور | Together.ai مجاني |
-| الفيديوهات | 3 فيديوهات | Fal.ai مجاني |
-
-## 🏗️ البنية المعمارية
-
+## 🏗️ البنية المعمارية المحدثة
 ```
 project_uncensored/
 ├── app/
 │   ├── api/
-│   │   ├── chat/route.ts          # API للدردشة النصية
-│   │   ├── generate-image/route.ts # API لتوليد الصور
-│   │   └── generate-video/route.ts # API لتوليد الفيديوهات
-│   ├── chat/page.tsx              # صفحة الدردشة
-│   ├── page.tsx                   # الصفحة الرئيسية
-│   └── layout.tsx                 # التخطيط الرئيسي
+│   │   ├── chat/route.ts          # يدعم الشخصيات (المفكر، الخبير، إلخ)
+│   │   ├── generate-image/route.ts # يدعم Flux Pro و Pollinations المجاني
+│   │   └── generate-video/route.ts # يدعم Veo 3.1 Fast و Fal.ai
 ├── components/
-│   ├── chat/ChatInterface.tsx      # واجهة الدردشة
-│   ├── ModelSelector.tsx           # منتقي النماذج
-│   └── AgeVerificationModal.tsx    # نافذة التحقق من العمر
+│   ├── chat/ChatInterface.tsx      # واجهة Sora2 الثابتة مع المعاينة والتحميل
+│   ├── ModelSelector.tsx           # منتقي الأوضاع
 ├── lib/
-│   ├── ai.ts                       # دوال الذكاء الاصطناعي
-│   ├── db.ts                       # عميل Prisma
-│   ├── clerk-prisma.ts             # تكامل Clerk مع Prisma
-│   └── utils.ts                    # دوال مساعدة
+│   ├── ai.ts                       # إعدادات الموديلات والشخصيات
 ├── prisma/
-│   └── schema.prisma               # نموذج قاعدة البيانات
-└── middleware.ts                   # Middleware للمصادقة
+│   └── schema.prisma               # قاعدة بيانات تدعم السجل والملفات
 ```
 
 ## 🔐 الأمان والخصوصية
-
-- ✅ جميع الطلبات محمية بمصادقة Clerk
-- ✅ التحقق من العمر (18+) إلزامي
-- ✅ لا يتم حفظ بيانات حساسة
-- ✅ جميع الاتصالات مشفرة (HTTPS)
-- ✅ قاعدة البيانات محمية
-
-## 📝 الترخيص
-
-هذا المشروع مرخص تحت رخصة MIT.
-
-## 🤝 المساهمة
-
-نرحب بالمساهمات! يرجى فتح issue أو pull request.
-
-## 📧 التواصل
-
-للأسئلة والاستفسارات، يرجى فتح issue على GitHub.
+- ✅ جميع الطلبات محمية بمصادقة Clerk.
+- ✅ التحقق من العمر (18+) إلزامي.
+- ✅ لا يتم حفظ بيانات حساسة.
+- ✅ دعم كامل للمحتوى غير المقيد للبالغين.
 
 ---
-
 **ملاحظة**: هذا الموقع مخصص للبالغين فقط (+18) ويحتوي على محتوى قد يكون حساساً. استخدمه بمسؤولية.
+🌍 تم التطوير بواسطة Manus AI.

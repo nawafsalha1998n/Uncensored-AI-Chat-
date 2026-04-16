@@ -2,6 +2,7 @@ generator client {
   provider      = "prisma-client-js"
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -37,7 +38,10 @@ model Message {
   content       String
   imageUrl      String?
   videoUrl      String?
+  fileUrl       String?  // رابط الملف المرفق
+  fileName      String?  // اسم الملف المرفق
   modelUsed     String?
+  personaUsed   String?  // الشخصية المستخدمة (المفكر، الخبير، إلخ)
   isUncensored  Boolean  @default(false)
   chatId        String
   chat          Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)

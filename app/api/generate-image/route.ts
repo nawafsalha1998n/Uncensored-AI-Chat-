@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 
 export async function POST(request: NextRequest) {
   try {
-    const { prompt, model = "flux" } = await request.json();
+    const { prompt, model = "flux-schnell" } = await request.json();
 
     if (!prompt || prompt.trim() === "") {
       return NextResponse.json({ error: "الـ prompt مطلوب" }, { status: 400 });
@@ -12,8 +12,12 @@ export async function POST(request: NextRequest) {
 
     const user = await getOrCreateUser();
 
-    // 1. محاولة استخدام Together.ai إذا كان المفتاح موجوداً
-    if (process.env.TOGETHER_API_KEY) {
+    // 1. استخدام Together.ai للموديلات الاحترافية
+    if (process.env.TOGETHER_API_KEY && model !== "pollinations") {
+      let togetherModel = "black-forest-labs/FLUX.1-schnell";
+      if (model === "flux-pro") togetherModel = "black-forest-labs/FLUX.1-pro";
+      if (model === "sd3") togetherModel = "stabilityai/stable-diffusion-3";
+
       try {
         const response = await fetch("https://api.together.xyz/v1/images/generations", {
           method: "POST",
@@ -22,11 +26,11 @@ export async function POST(request: NextRequest) {
             Authorization: `Bearer ${process.env.TOGETHER_API_KEY}`,
           },
           body: JSON.stringify({
-            model: "black-forest-labs/FLUX.1-schnell",
+            model: togetherModel,
             prompt,
             width: 1024,
             height: 1024,
-            steps: 4,
+            steps: model === "flux-pro" ? 20 : 4,
             n: 1,
             response_format: "base64",
           }),
@@ -35,46 +39,18 @@ export async function POST(request: NextRequest) {
         const data = await response.json();
         if (response.ok && data.data?.[0]?.b64_json) {
           const imageUrl = `data:image/png;base64,${data.data[0].b64_json}`;
-          
-          // حفظ في قاعدة البيانات
-          await prisma.message.create({
-            data: {
-              role: "assistant",
-              content: "✅ تم توليد الصورة بنجاح عبر Together.ai",
-              imageUrl,
-              chatId: "", // يمكن تحديثه لاحقاً أو تركه فارغاً للصور العامة
-            }
-          });
-
           return NextResponse.json({ imageUrl });
         }
       } catch (err) {
-        console.error("Together.ai failed, falling back to Pollinations", err);
+        console.error("Together.ai failed", err);
       }
     }
 
-    // 2. البديل المجاني تماماً: Pollinations.ai (لا يحتاج مفتاح)
-    // نستخدم نموذج Flux عبر Pollinations
+    // 2. البديل المجاني: Pollinations.ai
     const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&model=flux&seed=${Math.floor(Math.random() * 1000000)}`;
-
-    // حفظ في قاعدة البيانات كرسالة
-    // ملاحظة: في Pollinations الرابط مباشر، لذا نحفظ الرابط نفسه
-    await prisma.message.create({
-      data: {
-        role: "assistant",
-        content: "✅ تم توليد الصورة بنجاح عبر المحرك المجاني (Pollinations)",
-        imageUrl: pollinationsUrl,
-        chatId: "", 
-      }
-    });
-
     return NextResponse.json({ imageUrl: pollinationsUrl, isFallback: true });
 
   } catch (error: any) {
-    console.error("🚨 Image Generation Error:", error);
-    return NextResponse.json(
-      { error: error.message || "خطأ غير متوقع في توليد الصورة" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
