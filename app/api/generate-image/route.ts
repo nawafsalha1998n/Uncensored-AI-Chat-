@@ -4,7 +4,7 @@ import { OpenAI } from "openai";
 export async function POST(req: Request) {
   try {
     const { prompt, model } = await req.json();
-    let imageUrl = "";
+    let imageUrl: string | undefined;
 
     // 1️⃣ Pollinations (مجاني)
     if (model === "nano-banana" || model === "perchance") {
@@ -58,9 +58,11 @@ export async function POST(req: Request) {
         size: "1024x1024",
         n: 1,
       });
-      imageUrl = response.data?.[0]?.url;
+      // ✅ الإصلاح: استخدام ?? "" لضمان أن تكون النصوص من نوع string
+      imageUrl = response.data?.[0]?.url ?? undefined;
     }
 
+    // ✅ التحقق النهائي: إذا لم يكن هناك صورة، نرجع خطأ
     if (!imageUrl) {
       return NextResponse.json({ error: "فشل في توليد الصورة" }, { status: 500 });
     }
