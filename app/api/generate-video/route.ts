@@ -2,15 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getOrCreateUser } from "@/lib/clerk-prisma";
 import { prisma } from "@/lib/db";
 
-const VIDEO_MODELS = {
-  fastVideo: "fal-ai/fast-video",
-  minimax: "minimax/video-01",
-  runway: "runway/gen-3",
-};
-
 export async function POST(request: NextRequest) {
   try {
-    const { prompt, model = "fastVideo", duration = 5 } = await request.json();
+    const { prompt } = await request.json();
 
     if (!prompt || prompt.trim() === "") {
       return NextResponse.json({ error: "الـ prompt مطلوب" }, { status: 400 });
@@ -18,84 +12,51 @@ export async function POST(request: NextRequest) {
 
     const user = await getOrCreateUser();
 
-    // التحقق من الحد اليومي للفيديوهات
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    let dailyUsage = await prisma.dailyUsage.findUnique({
-      where: { userId: user.id },
-    });
-
-    if (!dailyUsage) {
-      dailyUsage = await prisma.dailyUsage.create({
-        data: { userId: user.id },
+    // حالياً لا يوجد API فيديو مجاني تماماً بدون مفتاح وبدون قيود صارمة مثل Pollinations للصور.
+    // سنحاول استخدام Fal.ai إذا توفر المفتاح، وإلا سنخبر المستخدم بالمشكلة.
+    
+    if (process.env.FAL_AI_KEY) {
+      const response = await fetch("https://fal.run/fal-ai/fast-video", {
+        method: "POST",
+        headers: {
+          Authorization: `Key ${process.env.FAL_AI_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prompt,
+          duration: 5,
+          num_inference_steps: 20,
+        }),
       });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        const videoUrl = data.video?.url || data.output?.url || data.urls?.[0];
+        if (videoUrl) {
+          // حفظ في قاعدة البيانات
+          await prisma.message.create({
+            data: {
+              role: "assistant",
+              content: "✅ تم توليد الفيديو بنجاح عبر Fal.ai",
+              videoUrl,
+              chatId: "", 
+            }
+          });
+          return NextResponse.json({ videoUrl });
+        }
+      }
     }
 
-    // إعادة تعيين العداد إذا تجاوزت 24 ساعة
-    if (new Date(dailyUsage.resetDate) < today) {
-      dailyUsage = await prisma.dailyUsage.update({
-        where: { userId: user.id },
-        data: { videosUsed: 0, resetDate: new Date() },
-      });
-    }
+    // إذا لم يتوفر مفتاح أو فشل الطلب
+    return NextResponse.json(
+      { 
+        error: "توليد الفيديو يتطلب مفتاح API من Fal.ai أو Kling AI. البدائل المجانية تماماً للفيديو نادرة حالياً.",
+        suggestion: "يرجى إضافة FAL_AI_KEY في إعدادات Vercel لتفعيل هذه الميزة." 
+      }, 
+      { status: 403 }
+    );
 
-    // التحقق من الحد اليومي (3 فيديوهات في اليوم)
-    if (dailyUsage.videosUsed >= 3) {
-      return NextResponse.json(
-        { error: "لقد وصلت إلى الحد اليومي من الفيديوهات (3 فيديوهات). حاول غداً" },
-        { status: 429 }
-      );
-    }
-
-    console.log("🔑 Using Fal.ai Key:", process.env.FAL_AI_KEY ? "موجود" : "مفقود");
-    console.log("🎬 Model:", model);
-
-    // استخدام Fast Video من Fal.ai (الخيار المجاني الأساسي)
-    const response = await fetch("https://fal.run/fal-ai/fast-video", {
-      method: "POST",
-      headers: {
-        Authorization: `Key ${process.env.FAL_AI_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        prompt,
-        duration: Math.min(duration, 5), // الحد الأقصى 5 ثوان
-        num_inference_steps: 20,
-      }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      console.error("❌ Fal.ai Error:", data);
-      return NextResponse.json(
-        { error: data.detail || "فشل توليد الفيديو" },
-        { status: response.status }
-      );
-    }
-
-    const videoUrl = data.video?.url || data.output?.url || data.urls?.[0];
-
-    if (!videoUrl) {
-      return NextResponse.json(
-        { error: "لم يتمكن من الحصول على رابط الفيديو" },
-        { status: 500 }
-      );
-    }
-
-    // تحديث عداد الاستخدام
-    await prisma.dailyUsage.update({
-      where: { userId: user.id },
-      data: { videosUsed: dailyUsage.videosUsed + 1 },
-    });
-
-    return NextResponse.json({
-      videoUrl,
-      model: "fal-ai/fast-video",
-      duration,
-      remaining: 3 - (dailyUsage.videosUsed + 1),
-    });
   } catch (error: any) {
     console.error("🚨 Video Generation Error:", error);
     return NextResponse.json(
