@@ -1,3 +1,6 @@
+import { createGroq } from "@ai-sdk/groq";
+import { generateText } from "ai";
+
 // نماذج الدردشة الموثوقة والفعالة
 export const chatModels = {
   // Groq (مجاني وسريع جداً)
@@ -52,3 +55,28 @@ export const videoModels = [
 
 export type ModelType = keyof typeof chatModels;
 export type PersonaType = keyof typeof personas;
+
+const groq = createGroq({
+  apiKey: process.env.GROQ_API_KEY,
+});
+
+export async function generateAIResponse(
+  messages: any[],
+  userId: string,
+  isUncensored: boolean = true,
+  modelId: string = "llama3"
+) {
+  const modelInfo = chatModels[modelId as ModelType] || chatModels.llama3;
+  const persona = isUncensored ? personas.uncensored : personas.thinker;
+
+  const { text } = await generateText({
+    model: groq(modelInfo.id),
+    system: persona.prompt,
+    messages: messages.map(m => ({
+      role: m.role,
+      content: m.content,
+    })),
+  });
+
+  return text;
+}

@@ -3,7 +3,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export async function POST(req: Request) {
   try {
-    const { prompt, model } = await res.json();
+    const { prompt, model } = await req.json();
 
     if (!prompt) {
       return NextResponse.json({ error: "الوصف مطلوب" }, { status: 400 });
@@ -27,10 +27,8 @@ export async function POST(req: Request) {
       const result = await videoModel.generateContent(prompt);
       const response = await result.response;
       
-      // ملاحظة: Veo 3.1 يعيد أحياناً رابطاً مؤقتاً أو يتطلب معالجة خاصة للـ blob
-      // الكود هنا مهيأ للتعامل مع الرد المباشر
       return NextResponse.json({ 
-        videoUrl: response.text() // أو الرابط المستخرج من الرد
+        videoUrl: response.text() 
       });
     }
 

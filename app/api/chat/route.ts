@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateAIResponse, ModelType } from "@/lib/ai";
+import { generateAIResponse } from "@/lib/ai";
 import { getOrCreateUser } from "@/lib/clerk-prisma";
 import { prisma } from "@/lib/db";
 
 export async function POST(request: NextRequest) {
   try {
-    const { messages, isUncensored = true, chatId, model = "llama370b" } = await request.json();
+    const { messages, isUncensored = true, chatId, model = "llama3" } = await request.json();
 
     // التحقق من صحة البيانات
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
       const chat = await prisma.chat.create({
         data: {
           userId: user.id,
-          title: messages[0]?.content?.slice(0, 60) || "محادثة جديدة",
+          title: messages[messages.length - 1]?.content?.slice(0, 60) || "محادثة جديدة",
         },
       });
       currentChatId = chat.id;
@@ -43,12 +43,12 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // توليد الرد من Groq
+    // توليد الرد
     const aiResponse = await generateAIResponse(
       messages,
       user.id,
       isUncensored,
-      model as ModelType
+      model
     );
 
     // حفظ رد الـ AI
@@ -58,14 +58,14 @@ export async function POST(request: NextRequest) {
         content: aiResponse,
         chatId: currentChatId,
         isUncensored,
-        modelUsed: model || "llama370b",
+        modelUsed: model || "llama3",
       },
     });
 
     return NextResponse.json({
       content: aiResponse,
       chatId: currentChatId,
-      model: model || "llama370b",
+      model: model || "llama3",
     });
   } catch (error: any) {
     console.error("❌ Chat Error:", error);
