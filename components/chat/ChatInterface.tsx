@@ -5,7 +5,7 @@ import { Send, Image as ImageIcon, Video as VideoIcon, Bot, Plus, Trash2, Histor
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-type Mode = "chat" | "image" | "video";
+type Mode = "chat" | "image" | "video"; 
 
 export default function ChatInterface() {
   const [messages, setMessages] = useState<any[]>([]);
