@@ -14,13 +14,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider>
-      <html lang="ar" dir="rtl">
-        <body className="bg-background text-foreground antialiased min-h-screen">
+    <html lang="ar" dir="rtl">
+      <body className="antialiased">
+        <ClerkProvider>
           {children}
           <Toaster position="top-center" richColors />
-        </body>
-      </html>
-    </ClerkProvider>
+        </ClerkProvider>
+      </body>
+    </html>
   );
 }
