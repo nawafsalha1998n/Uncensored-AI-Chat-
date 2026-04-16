@@ -71,22 +71,49 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 2. البديل الأخير والموثوق: Fal.ai
+    // 2. Fal.ai Fast Video (البديل الموثوق)
+    if (model === "fal-fast-video" && process.env.FAL_AI_KEY) {
+      try {
+        const response = await fetch("https://fal.run/fal-ai/fast-video", {
+          method: "POST",
+          headers: {
+            Authorization: `Key ${process.env.FAL_AI_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ prompt, duration: 5 }),
+        });
+
+        const data = await response.json();
+        const videoUrl = data.video?.url || data.output?.url || data.urls?.[0];
+
+        if (response.ok && videoUrl) {
+          return NextResponse.json({ videoUrl, model: "fal-fast-video" });
+        }
+      } catch (err) {
+        console.error("Fal Fast Video failed", err);
+      }
+    }
+
+    // 3. البديل النهائي: Fal.ai (تلقائي)
     if (process.env.FAL_AI_KEY) {
-      const response = await fetch("https://fal.run/fal-ai/fast-video", {
-        method: "POST",
-        headers: {
-          Authorization: `Key ${process.env.FAL_AI_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ prompt, duration: 5 }),
-      });
+      try {
+        const response = await fetch("https://fal.run/fal-ai/fast-video", {
+          method: "POST",
+          headers: {
+            Authorization: `Key ${process.env.FAL_AI_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ prompt, duration: 5 }),
+        });
 
-      const data = await response.json();
-      const videoUrl = data.video?.url || data.output?.url || data.urls?.[0];
+        const data = await response.json();
+        const videoUrl = data.video?.url || data.output?.url || data.urls?.[0];
 
-      if (response.ok && videoUrl) {
-        return NextResponse.json({ videoUrl });
+        if (response.ok && videoUrl) {
+          return NextResponse.json({ videoUrl, isFallback: true });
+        }
+      } catch (err) {
+        console.error("Fal.ai fallback failed", err);
       }
     }
 

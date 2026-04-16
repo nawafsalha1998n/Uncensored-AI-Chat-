@@ -178,7 +178,7 @@ export default function ChatInterface() {
         const res = await fetch("/api/generate-video", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt, model: "veo-3-1-fast" }),
+          body: JSON.stringify({ prompt, model: selectedImageModel }),
         });
 
         const data = await res.json();
@@ -275,7 +275,19 @@ export default function ChatInterface() {
               <option value="flux-pro">💎 Flux Pro</option>
               <option value="flux-dev">⚡ Flux Dev</option>
               <option value="sd3">🎨 SD3</option>
+              <option value="fal-flux-realism">🔥 Fal Flux Realism</option>
+              <option value="fal-flux-pro">✨ Fal Flux Pro</option>
               <option value="pollinations-free">🎁 مجاني</option>
+            </select>
+          )}
+          {selectedMode === "video" && (
+            <select 
+              value={selectedImageModel} 
+              onChange={(e) => setSelectedImageModel(e.target.value)}
+              className="bg-zinc-800 border-none rounded-lg text-[10px] sm:text-xs px-2 sm:px-3 py-1.5 outline-none focus:ring-1 focus:ring-cyan-500 max-w-[150px]"
+            >
+              <option value="veo-3-1-fast">🎬 Veo 3.1 Fast</option>
+              <option value="fal-fast-video">⚡ Fal Fast Video</option>
             </select>
           )}
           

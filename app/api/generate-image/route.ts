@@ -128,7 +128,59 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 6. Qwen Vision (قوي جداً)
+    // 6. Fal.ai Flux Realism (جودة عالية جداً)
+    if (model === "fal-flux-realism" && process.env.FAL_AI_KEY) {
+      try {
+        const response = await fetch("https://fal.run/fal-ai/flux-realism", {
+          method: "POST",
+          headers: {
+            Authorization: `Key ${process.env.FAL_AI_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            prompt,
+            image_size: { width: 1024, height: 1024 },
+            num_inference_steps: 28,
+          }),
+        });
+
+        const data = await response.json();
+        if (response.ok && (data.image?.url || data.output?.image?.url)) {
+          imageUrl = data.image?.url || data.output?.image?.url;
+          return NextResponse.json({ imageUrl, model: "fal-flux-realism" });
+        }
+      } catch (err) {
+        console.error("Fal Flux Realism failed", err);
+      }
+    }
+
+    // 7. Fal.ai Flux Pro (الأقوى من Fal)
+    if (model === "fal-flux-pro" && process.env.FAL_AI_KEY) {
+      try {
+        const response = await fetch("https://fal.run/fal-ai/flux-pro", {
+          method: "POST",
+          headers: {
+            Authorization: `Key ${process.env.FAL_AI_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            prompt,
+            image_size: { width: 1024, height: 1024 },
+            num_inference_steps: 50,
+          }),
+        });
+
+        const data = await response.json();
+        if (response.ok && (data.image?.url || data.output?.image?.url)) {
+          imageUrl = data.image?.url || data.output?.image?.url;
+          return NextResponse.json({ imageUrl, model: "fal-flux-pro" });
+        }
+      } catch (err) {
+        console.error("Fal Flux Pro failed", err);
+      }
+    }
+
+    // 8. Qwen Vision (قوي جداً)
     if (model === "qwen-vl" && process.env.QWEN_API_KEY) {
       try {
         const response = await fetch("https://dashscope.aliyuncs.com/api/v1/services/aigc/text2image/generation", {
