@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOrCreateUser } from "@/lib/clerk-prisma";
 import { prisma } from "@/lib/db";
-import { generateAIResponse, chatModels } from "@/lib/ai";
+import { generateAIResponse } from "@/lib/ai";
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,9 +14,10 @@ export async function POST(request: NextRequest) {
     const user = await getOrCreateUser();
     let currentChatId = chatId;
 
+    // ✅ إنشاء محادثة جديدة - تم إصلاح الصيغة
     if (!currentChatId) {
       const chat = await prisma.chat.create({
-         {
+        data: {  // ← كلمة "data:" ضرورية هنا
           userId: user.id,
           title: messages[messages.length - 1]?.content?.slice(0, 60) || "محادثة جديدة",
         },
@@ -24,10 +25,11 @@ export async function POST(request: NextRequest) {
       currentChatId = chat.id;
     }
 
+    // ✅ حفظ رسالة المستخدم - تم إصلاح الصيغة
     const lastMessage = messages[messages.length - 1];
     if (lastMessage?.role === "user") {
       await prisma.message.create({
-         {
+        data: {  // ← كلمة "data:" ضرورية هنا
           role: "user",
           content: lastMessage.content,
           chatId: currentChatId,
@@ -37,11 +39,12 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // ✅ توليد الرد عبر الدالة الموحدة
+    // ✅ توليد الرد عبر الدالة الموحدة من lib/ai.ts
     const aiResponse = await generateAIResponse(messages, model);
 
+    // ✅ حفظ رد الذكاء الاصطناعي - تم إصلاح الصيغة
     await prisma.message.create({
-       {
+      data: {  // ← كلمة "data:" ضرورية هنا
         role: "assistant",
         content: aiResponse,
         chatId: currentChatId,
