@@ -30,7 +30,7 @@ export default function ChatInterface() {
       const blobUrl = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = blobUrl;
-      link.download = // fileName: temporarily removed
+      link.download = fileUrl;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
