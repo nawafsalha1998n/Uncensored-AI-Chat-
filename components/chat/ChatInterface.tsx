@@ -1,27 +1,41 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Image as ImageIcon, Video as VideoIcon, Bot, Plus, Trash2, History, Download, Maximize2, Paperclip, User, ShieldCheck, Copy, Check, ExternalLink, X } from "lucide-react";
+import { Send, Image as ImageIcon, Video as VideoIcon, Bot, Sparkles, Copy, Check, ExternalLink, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-type Mode = "chat" | "image" | "video"; 
+type Mode = "chat" | "image" | "video";
 
 export default function ChatInterface() {
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedMode, setSelectedMode] = useState<Mode>("chat");
-  const [selectedImageModel, setSelectedImageModel] = useState("nano-banana");
-  const [selectedVideoModel, setSelectedVideoModel] = useState("zsky-video");
-  const [selectedChatModel, setSelectedChatModel] = useState("llama3");
+  const [selectedModel, setSelectedModel] = useState("gemini-2.0-flash");
   const [previewMedia, setPreviewMedia] = useState<{ url: string; type: "image" | "video" } | null>(null);
+  const [isCopying, setIsCopying] = useState(false);
   
   const scrollRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+    }
+  }, [input]);
+
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setIsCopying(true);
+    setTimeout(() => setIsCopying(false), 2000);
+    toast.success("تم نسخ النص");
+  };
 
   const handleDownload = async (url: string, filename: string) => {
     try {
@@ -30,12 +44,12 @@ export default function ChatInterface() {
       const blobUrl = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = blobUrl;
-      link.download = filename; // ✅ تم التصحيح: filename بدلاً من fileName
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(blobUrl);
-      toast.success("بدأ التحميل...");
+      toast.success("تم بدء التحميل");
     } catch (error) {
       window.open(url, '_blank');
     }
@@ -50,9 +64,20 @@ export default function ChatInterface() {
     setInput("");
     setIsLoading(true);
 
+    // ضبط ارتفاع النص بعد الإرسال
+    if (textareaRef.current) textareaRef.current.style.height = "auto";
+
     try {
-      const endpoint = selectedMode === "chat" ? "/api/chat" : selectedMode === "image" ? "/api/generate-image" : "/api/generate-video";
-      const body = { prompt, messages: [...messages, userMessage], model: selectedMode === "chat" ? selectedChatModel : selectedMode === "image" ? selectedImageModel : selectedVideoModel };
+      const endpoint = selectedMode === "chat" 
+        ? "/api/chat" 
+        : selectedMode === "image" ? "/api/generate-image" 
+        : "/api/generate-video";
+
+      const body = { 
+        prompt, 
+        messages: selectedMode === "chat" ? [...messages, userMessage] : undefined, 
+        model: selectedModel 
+      };
 
       const res = await fetch(endpoint, {
         method: "POST",
@@ -61,11 +86,11 @@ export default function ChatInterface() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "حدث خطأ");
+      if (!res.ok) throw new Error(data.error || "حدث خطأ غير متوقع");
 
       setMessages((prev) => [...prev, { 
         role: "assistant", 
-        content: data.content || (selectedMode === "image" ? "✅ تم توليد الصورة:" : "✅ تم توليد الفيديو:"),
+        content: data.content,
         imageUrl: data.imageUrl,
         videoUrl: data.videoUrl,
         redirectUrl: data.redirectUrl
@@ -77,97 +102,115 @@ export default function ChatInterface() {
     }
   };
 
-  return (
-    <div className="h-screen bg-zinc-950 flex flex-col overflow-hidden text-zinc-100">
-      {/* Preview Modal */}
-      {previewMedia && (
-        <div className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4 backdrop-blur-md">
-          <button onClick={() => setPreviewMedia(null)} className="absolute top-6 right-6 text-white p-2 bg-zinc-800 rounded-full"><X /></button>
-          {previewMedia.type === "image" ? (
-            <img src={previewMedia.url} className="max-h-[85vh] rounded-xl shadow-2xl border border-zinc-800" />
-          ) : (
-            <video src={previewMedia.url} controls autoPlay className="max-h-[85vh] rounded-xl shadow-2xl border border-zinc-800" />
-          )}
-        </div>
-      )}
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
 
-      {/* Header - Sticky */}
-      <header className="flex-none border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-xl px-6 py-4 flex items-center justify-between z-20">
+  return (
+    <div className="h-screen bg-zinc-950 flex flex-col overflow-hidden text-zinc-100 selection:bg-purple-500/30">
+      
+      {/* Header احترافي */}
+      <header className="flex-none border-b border-zinc-800/50 bg-zinc-950/80 backdrop-blur-md px-4 py-3 flex items-center justify-between z-20 sticky top-0">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-tr from-purple-600 to-pink-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/20">🚀</div>
-          <h1 className="text-lg font-black tracking-tighter bg-gradient-to-r from-white to-zinc-500 bg-clip-text text-transparent">AI UNCENSORED</h1>
+          <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center shadow-lg shadow-purple-500/20">
+            <Sparkles className="w-4 h-4 text-white" />
+          </div>
+          <h1 className="text-lg font-bold tracking-tight bg-gradient-to-r from-white to-zinc-400 bg-clip-text text-transparent hidden sm:block">
+            AI Uncensored Pro
+          </h1>
         </div>
         
-        <div className="flex items-center gap-2">
-          <select value={selectedMode} onChange={(e) => setSelectedMode(e.target.value as Mode)} className="bg-zinc-800 border-none rounded-lg text-xs px-3 py-2 outline-none cursor-pointer hover:bg-zinc-700 transition">
-            <option value="chat">💬 محادثة</option>
-            <option value="image">🎨 صور</option>
-            <option value="video">🎬 فيديو</option>
-          </select>
-          
-         <select 
-  value={selectedMode === "chat" ? selectedChatModel : selectedMode === "image" ? selectedImageModel : selectedVideoModel} 
-  onChange={(e) => selectedMode === "chat" ? setSelectedChatModel(e.target.value) : selectedMode === "image" ? setSelectedImageModel(e.target.value) : setSelectedVideoModel(e.target.value)}
-  className="bg-zinc-800 border-none rounded-lg text-xs px-3 py-2 outline-none cursor-pointer hover:bg-zinc-700 transition"
->
-  {/* 💬 نماذج الدردشة */}
-  {selectedMode === "chat" && (
-    <>
-      <option value="llama3">🦙 Llama 3.3 (Groq)</option>
-      <option value="mixtral">🌪️ Mixtral 8x7B</option>
-      <option value="gpt4">🤖 GPT-4o</option>
-      <option value="qwen3.6-plus">🇨🇳 Qwen 3.6 Plus (عربي ممتاز)</option>
-      <option value="qwen-flash">⚡ Qwen Flash (سريع ورخيص)</option>
-    </>
-  )}
-  
-  {/* 🎨 نماذج الصور */}
-  {selectedMode === "image" && (
-    <>
-      <option value="nano-banana">🍌 Nano Banana 2</option>
-      <option value="perchance">✨ Perchance</option>
-      <option value="fal-flux-realism">🔥 Fal Flux Realism</option>
-      <option value="flux-pro">💎 Flux Pro</option>
-      <option value="qwen-image">🖼️ Qwen Image (علي بابا)</option>
-    </>
-  )}
-  
-  {/* 🎬 نماذج الفيديو */}
-  {selectedMode === "video" && (
-    <>
-      <option value="zsky-video">🎬 Zsky AI (Free)</option>
-      <option value="veo-3-1-fast">🎥 Veo 3.1 Fast</option>
-      <option value="fal-fast-video">⚡ Fal Fast Video</option>
-      <option value="wan2.7-t2v">🎞️ Wan 2.7 (نص→فيديو)</option>
-      <option value="wan2.7-i2v">📷 Wan 2.7 (صورة→فيديو)</option>
-    </>
-  )}
-</select>
+        <div className="flex items-center gap-2 bg-zinc-900/50 p-1 rounded-lg border border-zinc-800">
+          <button
+            onClick={() => setSelectedMode("chat")}
+            className={cn("px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1.5", selectedMode === "chat" ? "bg-zinc-800 text-white shadow-sm" : "text-zinc-400 hover:text-white hover:bg-zinc-800/50")}
+          >
+            <Bot className="w-3.5 h-3.5" /> دردشة
+          </button>
+          <button
+            onClick={() => setSelectedMode("image")}
+            className={cn("px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1.5", selectedMode === "image" ? "bg-zinc-800 text-white shadow-sm" : "text-zinc-400 hover:text-white hover:bg-zinc-800/50")}
+          >
+            <ImageIcon className="w-3.5 h-3.5" /> صور
+          </button>
+          <button
+            onClick={() => setSelectedMode("video")}
+            className={cn("px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1.5", selectedMode === "video" ? "bg-zinc-800 text-white shadow-sm" : "text-zinc-400 hover:text-white hover:bg-zinc-800/50")}
+          >
+            <VideoIcon className="w-3.5 h-3.5" /> فيديو
+          </button>
         </div>
       </header>
 
       {/* Chat Area */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-6 scroll-smooth">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 scroll-smooth max-w-4xl mx-auto w-full">
+        {messages.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-full text-center space-y-4 opacity-40">
+            <div className="w-16 h-16 bg-zinc-900 rounded-2xl flex items-center justify-center mb-2">
+              <Sparkles className="w-8 h-8 text-purple-400" />
+            </div>
+            <h2 className="text-xl font-semibold text-zinc-300">كيف يمكنني مساعدتك اليوم؟</h2>
+            <p className="text-sm text-zinc-500 max-w-xs">يمكنك اختيار الوضع من الأعلى للبدء في الدردشة، أو توليد الصور والفيديو بجودة عالية.</p>
+          </div>
+        )}
+
         {messages.map((msg, i) => (
-          <div key={i} className={cn("flex", msg.role === "user" ? "justify-end" : "justify-start")}>
-            <div className={cn("max-w-[80%] p-4 rounded-2xl shadow-xl", msg.role === "user" ? "bg-purple-600 text-white rounded-tr-none" : "bg-zinc-900 border border-zinc-800 rounded-tl-none")}>
-              <p className="text-sm leading-relaxed">{msg.content}</p>
-              {msg.imageUrl && (
-                <div className="mt-4 relative group">
-                  <img src={msg.imageUrl} className="rounded-xl border border-zinc-800 cursor-zoom-in" onClick={() => setPreviewMedia({ url: msg.imageUrl, type: "image" })} />
-                  <button onClick={() => handleDownload(msg.imageUrl, "ai-image.png")} className="absolute top-2 right-2 p-2 bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition"><Download className="w-4 h-4" /></button>
+          <div key={i} className={cn("flex w-full", msg.role === "user" ? "justify-end" : "justify-start")}>
+            <div className={cn(
+              "max-w-[90%] sm:max-w-[80%] group relative",
+              msg.role === "user" 
+                ? "bg-zinc-800 text-zinc-100 rounded-2xl rounded-tr-sm" 
+                : "bg-transparent text-zinc-300"
+            )}>
+              {msg.role === "assistant" && (
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+                    <Bot className="w-3 h-3 text-white" />
+                  </div>
+                  <span className="text-xs font-medium text-zinc-500">AI Assistant</span>
                 </div>
               )}
-              {msg.videoUrl && (
-                <div className="mt-4 relative group">
-                  <video src={msg.videoUrl} controls className="rounded-xl border border-zinc-800" />
-                  <button onClick={() => handleDownload(msg.videoUrl, "ai-video.mp4")} className="absolute top-2 right-2 p-2 bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition"><Download className="w-4 h-4" /></button>
-                </div>
-              )}
-              {msg.redirectUrl && (
-                <a href={msg.redirectUrl} target="_blank" className="mt-4 flex items-center gap-2 p-3 bg-zinc-800 rounded-xl text-purple-400 hover:bg-zinc-700 transition">
-                  <ExternalLink className="w-4 h-4" /> إكمال التوليد في Zsky AI
-                </a>
+              
+              <div className={cn("p-3 sm:p-4 text-sm leading-relaxed whitespace-pre-wrap", msg.role === "user" ? "" : "")}>
+                {msg.content && <p>{msg.content}</p>}
+                
+                {msg.imageUrl && (
+                  <div className="mt-3 rounded-xl overflow-hidden border border-zinc-800/50 shadow-2xl relative group/img">
+                    <img src={msg.imageUrl} className="w-full h-auto max-h-[500px] object-contain bg-zinc-900 cursor-pointer" onClick={() => setPreviewMedia({ url: msg.imageUrl, type: "image" })} />
+                    <div className="absolute bottom-2 right-2 flex gap-2 opacity-0 group-hover/img:opacity-100 transition-opacity">
+                      <button onClick={() => handleDownload(msg.imageUrl, `image-${Date.now()}.png`)} className="p-1.5 bg-black/60 backdrop-blur rounded-md hover:bg-black/80 text-white"><Check className="w-4 h-4" /></button>
+                      <button onClick={() => setPreviewMedia({ url: msg.imageUrl, type: "image" })} className="p-1.5 bg-black/60 backdrop-blur rounded-md hover:bg-black/80 text-white"><ExternalLink className="w-4 h-4" /></button>
+                    </div>
+                  </div>
+                )}
+
+                {msg.videoUrl && (
+                  <div className="mt-3 rounded-xl overflow-hidden border border-zinc-800/50 shadow-2xl relative group/vid">
+                    <video src={msg.videoUrl} controls className="w-full h-auto max-h-[400px] bg-black" />
+                    <div className="absolute bottom-2 right-2 flex gap-2 opacity-0 group-hover/vid:opacity-100 transition-opacity">
+                      <button onClick={() => handleDownload(msg.videoUrl, `video-${Date.now()}.mp4`)} className="p-1.5 bg-black/60 backdrop-blur rounded-md hover:bg-black/80 text-white"><Check className="w-4 h-4" /></button>
+                    </div>
+                  </div>
+                )}
+
+                {msg.redirectUrl && (
+                  <a href={msg.redirectUrl} target="_blank" rel="noreferrer" className="mt-3 flex items-center justify-between p-3 bg-zinc-900/50 border border-zinc-800 rounded-lg hover:bg-zinc-800/50 transition group/link">
+                    <div className="flex items-center gap-2 text-purple-400">
+                      <ExternalLink className="w-4 h-4" />
+                      <span className="text-xs font-medium">توليد خارجي</span>
+                    </div>
+                    <span className="text-xs text-zinc-500 group-hover/link:text-zinc-300">اضغط للفتح</span>
+                  </a>
+                )}
+              </div>
+
+              {msg.role === "assistant" && msg.content && (
+                <button onClick={() => handleCopy(msg.content)} className="absolute top-0 -left-8 p-1.5 text-zinc-600 hover:text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {isCopying ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                </button>
               )}
             </div>
           </div>
@@ -175,22 +218,85 @@ export default function ChatInterface() {
         <div ref={scrollRef} />
       </div>
 
-      {/* Input - Sticky */}
-      <div className="flex-none p-6 bg-gradient-to-t from-zinc-950 via-zinc-950 to-transparent">
-        <div className="max-w-4xl mx-auto flex items-center gap-3 bg-zinc-900 p-2 rounded-3xl border border-zinc-800 shadow-2xl focus-within:border-purple-500/50 transition">
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), sendMessage())}
-            placeholder="اكتب رسالتك هنا..."
-            className="flex-1 bg-transparent border-none outline-none p-3 text-sm resize-none max-h-32 min-h-[44px]"
-            rows={1}
-          />
-          <button onClick={sendMessage} disabled={isLoading || !input.trim()} className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition disabled:opacity-50">
-            {isLoading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Send className="w-5 h-5" />}
-          </button>
+      {/* Input Area - Floating & Modern */}
+      <div className="flex-none p-4 sm:p-6 bg-gradient-to-t from-zinc-950 via-zinc-950 to-transparent pt-12">
+        <div className="max-w-3xl mx-auto relative">
+          <div className="bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-3xl p-2 shadow-2xl ring-1 ring-white/5 focus-within:ring-purple-500/30 focus-within:border-purple-500/30 transition-all">
+            
+            {/* Model Selector Pill */}
+            <div className="px-2 pb-2 border-b border-zinc-800/50 mb-2">
+              <select
+                value={selectedModel}
+                onChange={(e) => setSelectedModel(e.target.value)}
+                className="bg-transparent text-xs font-medium text-zinc-400 outline-none cursor-pointer hover:text-zinc-200 w-full"
+              >
+                {/* Chat Models */}
+                {selectedMode === "chat" && (
+                  <>
+                    <option value="gemini-2.0-flash">✨ Gemini 2.0 Flash (الأسرع والأذكى)</option>
+                    <option value="gemini-2.0-flash-thinking-exp">🧠 Gemini 2.0 Flash Thinking</option>
+                    <option value="gemini-1.5-flash">⚡ Gemini 1.5 Flash (بديل)</option>
+                  </>
+                )}
+                {/* Image Models */}
+                {selectedMode === "image" && (
+                  <>
+                    <option value="flux-pro">💎 Flux Pro (جودة عالية جداً)</option>
+                    <option value="nano-banana">🍌 Nano Banana 2 (سريع)</option>
+                    <option value="perchance">✨ Perchance (فني)</option>
+                  </>
+                )}
+                {/* Video Models */}
+                {selectedMode === "video" && (
+                  <>
+                    <option value="zsky-video">🎬 Zsky AI (مجاني)</option>
+                    <option value="fal-fast-video">⚡ Fal.ai Fast Video</option>
+                  </>
+                )}
+              </select>
+            </div>
+
+            <div className="flex items-end gap-2">
+              <textarea
+                ref={textareaRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={selectedMode === "chat" ? "اكتب رسالتك هنا..." : selectedMode === "image" ? "وصف الصورة..." : "وصف الفيديو..."}
+                className="flex-1 bg-transparent border-none outline-none p-2 text-sm text-zinc-100 resize-none max-h-48 min-h-[44px] placeholder:text-zinc-600 scrollbar-hide"
+                rows={1}
+              />
+              <button 
+                onClick={sendMessage} 
+                disabled={isLoading || !input.trim()} 
+                className={cn(
+                  "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 shrink-0",
+                  isLoading ? "bg-zinc-800 text-zinc-500 cursor-wait" : input.trim() ? "bg-purple-600 text-white shadow-lg shadow-purple-600/25 hover:bg-purple-500 hover:scale-105" : "bg-zinc-800 text-zinc-600 cursor-not-allowed"
+                )}
+              >
+                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+              </button>
+            </div>
+          </div>
+          <p className="text-center text-[10px] text-zinc-600 mt-2 font-medium">
+            AI can make mistakes. Check important info.
+          </p>
         </div>
       </div>
+
+      {/* Preview Modal */}
+      {previewMedia && (
+        <div className="fixed inset-0 bg-black/95 z-[100] flex items-center justify-center p-4 backdrop-blur-xl animate-in fade-in duration-200">
+          <button onClick={() => setPreviewMedia(null)} className="absolute top-6 right-6 p-2 bg-zinc-800/50 hover:bg-zinc-700/50 rounded-full text-white transition">
+            <X className="w-6 h-6" />
+          </button>
+          {previewMedia.type === "image" ? (
+            <img src={previewMedia.url} className="max-h-[90vh] max-w-[95vw] rounded-xl shadow-2xl" />
+          ) : (
+            <video src={previewMedia.url} controls autoPlay className="max-h-[90vh] max-w-[95vw] rounded-xl shadow-2xl" />
+          )}
+        </div>
+      )}
     </div>
   );
 }
