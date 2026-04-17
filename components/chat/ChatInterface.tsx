@@ -12,7 +12,7 @@ export default function ChatInterface() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedMode, setSelectedMode] = useState<Mode>("chat");
-  const [selectedModel, setSelectedModel] = useState("gemini-2.0-flash");
+  const [selectedModel, setSelectedModel] = useState("gemini-1.5-flash"); // ✅ تم التصحيح
   const [previewMedia, setPreviewMedia] = useState<{ url: string; type: "image" | "video" } | null>(null);
   const [isCopying, setIsCopying] = useState(false);
   
@@ -64,7 +64,6 @@ export default function ChatInterface() {
     setInput("");
     setIsLoading(true);
 
-    // ضبط ارتفاع النص بعد الإرسال
     if (textareaRef.current) textareaRef.current.style.height = "auto";
 
     try {
@@ -232,11 +231,11 @@ export default function ChatInterface() {
               >
                 {/* Chat Models */}
                 {selectedMode === "chat" && (
-  <>
-    <option value="gemini-1.5-flash">✨ Gemini 1.5 Flash (سريع + مجاني)</option>
-    <option value="gemini-1.5-pro">🧠 Gemini 1.5 Pro (أذكى - 2 طلب/دقيقة)</option>
-  </>
-)}
+                  <>
+                    <option value="gemini-1.5-flash">✨ Gemini 1.5 Flash (سريع + مجاني)</option>
+                    <option value="gemini-1.5-pro">🧠 Gemini 1.5 Pro (أذكى - 2 طلب/دقيقة)</option>
+                  </>
+                )}
                 {/* Image Models */}
                 {selectedMode === "image" && (
                   <>
