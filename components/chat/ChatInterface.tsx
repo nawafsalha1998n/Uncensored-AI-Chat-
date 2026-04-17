@@ -12,7 +12,7 @@ export default function ChatInterface() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedMode, setSelectedMode] = useState<Mode>("chat");
-  const [selectedModel, setSelectedModel] = useState("gemini-1.5-flash"); // ✅ تم التصحيح
+  const [selectedModel, setSelectedModel] = useState("llama-3.2-1b");تم التصحيح
   const [previewMedia, setPreviewMedia] = useState<{ url: string; type: "image" | "video" } | null>(null);
   const [isCopying, setIsCopying] = useState(false);
   
