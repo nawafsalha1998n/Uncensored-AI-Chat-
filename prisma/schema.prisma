@@ -37,8 +37,7 @@ model Message {
   role          String   // "user" | "assistant"
   content       String
   imageUrl      String?
-  videoUrl      String?
-  fileUrl       String?  // رابط الملف المرفق
+  videoUrl      String? 
   fileName      String?  // اسم الملف المرفق
   modelUsed     String?
   personaUsed   String?  // الشخصية المستخدمة (المفكر، الخبير، إلخ)
@@ -46,7 +45,7 @@ model Message {
   chatId        String
   chat          Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
   createdAt     DateTime @default(now())
-  fileUrl   String?
+  fileUrl   String?   // رابط الملف المرفق
 }
 
 model DailyUsage {
