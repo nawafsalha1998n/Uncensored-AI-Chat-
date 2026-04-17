@@ -6,10 +6,23 @@ export async function POST(req: Request) {
     const { prompt, model } = await req.json();
     let imageUrl: string | undefined;
 
-    if (model === "nano-banana" || model === "perchance") {
-      const seed = Math.floor(Math.random() * 1000000);
-      imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${model === 'nano-banana' ? 'flux' : 'any'}&seed=${seed}&width=1024&height=1024&nologo=true`;
-    } 
+// Pollinations (مجاني)
+if (model === "nano-banana" || model === "perchance") {
+  const seed = Math.floor(Math.random() * 1000000);
+  // استخدام رابط مباشر يعمل فوراً
+  imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${model === 'nano-banana' ? 'flux' : 'any'}&seed=${seed}&width=1024&height=1024&nologo=true&enhance=true`;
+  
+  // التحقق من أن الرابط يعمل
+  try {
+    const testResponse = await fetch(imageUrl, { method: 'HEAD' });
+    if (!testResponse.ok) {
+      // محاولة ثانية بدون enhance
+      imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?seed=${seed}&width=1024&height=1024`;
+    }
+  } catch (e) {
+    console.log("Pollinations fallback applied");
+  }
+}
     else if (model === "flux-pro") {
       const response = await fetch("https://api.together.xyz/v1/images/generations", {
         method: "POST",
