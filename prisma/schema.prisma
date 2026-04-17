@@ -46,6 +46,7 @@ model Message {
   chatId        String
   chat          Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
   createdAt     DateTime @default(now())
+  fileUrl   String?
 }
 
 model DailyUsage {
