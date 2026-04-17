@@ -105,15 +105,44 @@ export default function ChatInterface() {
             <option value="video">🎬 فيديو</option>
           </select>
           
-          <select 
-            value={selectedMode === "chat" ? selectedChatModel : selectedMode === "image" ? selectedImageModel : selectedVideoModel} 
-            onChange={(e) => selectedMode === "chat" ? setSelectedChatModel(e.target.value) : selectedMode === "image" ? setSelectedImageModel(e.target.value) : setSelectedVideoModel(e.target.value)}
-            className="bg-zinc-800 border-none rounded-lg text-xs px-3 py-2 outline-none cursor-pointer hover:bg-zinc-700 transition"
-          >
-            {selectedMode === "chat" && <><option value="llama3">Llama 3.3</option><option value="qwen">Qwen Max</option></>}
-            {selectedMode === "image" && <><option value="nano-banana">Nano Banana 2</option><option value="perchance">Perchance</option><option value="flux-pro">Flux Pro</option></>}
-            {selectedMode === "video" && <><option value="zsky-video">Zsky AI (Free)</option><option value="veo-3-1">Veo 3.1 Fast</option></>}
-          </select>
+         <select 
+  value={selectedMode === "chat" ? selectedChatModel : selectedMode === "image" ? selectedImageModel : selectedVideoModel} 
+  onChange={(e) => selectedMode === "chat" ? setSelectedChatModel(e.target.value) : selectedMode === "image" ? setSelectedImageModel(e.target.value) : setSelectedVideoModel(e.target.value)}
+  className="bg-zinc-800 border-none rounded-lg text-xs px-3 py-2 outline-none cursor-pointer hover:bg-zinc-700 transition"
+>
+  {/* 💬 نماذج الدردشة */}
+  {selectedMode === "chat" && (
+    <>
+      <option value="llama3">🦙 Llama 3.3 (Groq)</option>
+      <option value="mixtral">🌪️ Mixtral 8x7B</option>
+      <option value="gpt4">🤖 GPT-4o</option>
+      <option value="qwen3.6-plus">🇨🇳 Qwen 3.6 Plus (عربي ممتاز)</option>
+      <option value="qwen-flash">⚡ Qwen Flash (سريع ورخيص)</option>
+    </>
+  )}
+  
+  {/* 🎨 نماذج الصور */}
+  {selectedMode === "image" && (
+    <>
+      <option value="nano-banana">🍌 Nano Banana 2</option>
+      <option value="perchance">✨ Perchance</option>
+      <option value="fal-flux-realism">🔥 Fal Flux Realism</option>
+      <option value="flux-pro">💎 Flux Pro</option>
+      <option value="qwen-image">🖼️ Qwen Image (علي بابا)</option>
+    </>
+  )}
+  
+  {/* 🎬 نماذج الفيديو */}
+  {selectedMode === "video" && (
+    <>
+      <option value="zsky-video">🎬 Zsky AI (Free)</option>
+      <option value="veo-3-1-fast">🎥 Veo 3.1 Fast</option>
+      <option value="fal-fast-video">⚡ Fal Fast Video</option>
+      <option value="wan2.7-t2v">🎞️ Wan 2.7 (نص→فيديو)</option>
+      <option value="wan2.7-i2v">📷 Wan 2.7 (صورة→فيديو)</option>
+    </>
+  )}
+</select>
         </div>
       </header>
 
