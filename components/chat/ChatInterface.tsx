@@ -230,16 +230,19 @@ export default function ChatInterface() {
                 className="bg-transparent text-xs font-medium text-zinc-400 outline-none cursor-pointer hover:text-zinc-200 w-full"
               >
                 {/* Chat Models */}
-                {selectedMode === "chat" && (
+              {selectedMode === "chat" && (
   <>
-    {/* 🆓 نماذج مجانية تماماً */}
-    <option value="llama-3.2-3b">🦙 Llama 3.2 3B (سريع + مجاني)</option>
-    <option value="qwen-2.5-7b">🇨🇳 Qwen 2.5 7B (عربي ممتاز + مجاني)</option>
-    <option value="gemma-2-9b">✨ Gemma 2 9B (جوجل + مجاني)</option>
-    <option value="llama-3.1-8b">🦙 Llama 3.1 8B (متوازن + مجاني)</option>
+    {/* 🆓 نماذج مجانية تماماً - تعمل حالياً */}
+    <option value="llama-3.2-1b">🦙 Llama 3.2 1B (أسرع + مجاني)</option>
+    <option value="gemma-2-2b">✨ Gemma 2 2B (جوجل + مجاني)</option>
+    <option value="mistral-7b">🌪️ Mistral 7B (مجاني)</option>
     
-    {/* 💎 نماذج متقدمة (قد تكون لها حدود) */}
-    <option value="llama-3.3-70b">🚀 Llama 3.3 70B (أقوى - حدود يومية)</option>
+    {/* 💎 نماذج بحدود يومية مجانية (تتطلب رصيد $0) */}
+    <option value="llama-3.2-3b">🦙 Llama 3.2 3B (متوازن - حد يومي)</option>
+    <option value="qwen-2.5-7b">🇨🇳 Qwen 2.5 7B (عربي - حد يومي)</option>
+    <option value="llama-3.3-70b">🚀 Llama 3.3 70B (أقوى - حد يومي)</option>
+    
+    {/* 🔄 خيار جوجل الاحتياطي */}
     <option value="gemini-1.5-flash">✨ Gemini 1.5 Flash (جوجل)</option>
   </>
 )}
