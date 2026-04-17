@@ -38,7 +38,7 @@ model Message {
   content       String
   imageUrl      String?
   videoUrl      String? 
-  fileName      String?  // اسم الملف المرفق
+  fileName  String?      // اسم الملف المرفق
   modelUsed     String?
   personaUsed   String?  // الشخصية المستخدمة (المفكر، الخبير، إلخ)
   isUncensored  Boolean  @default(false)
