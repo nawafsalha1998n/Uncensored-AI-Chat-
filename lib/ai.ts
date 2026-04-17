@@ -1,46 +1,51 @@
 // ✅ الاستيرادات
 import { OpenAI } from "openai";
 
-// ✅ نماذج الدردشة المجانية من OpenRouter
+// ✅ نماذج الدردشة - بأسماء صحيحة ومحدثة لـ OpenRouter
 export const chatModels = {
-  // 🆓 نماذج مجانية تماماً (بدون حد يومي صارم)
-  "llama-3.2-3b": { 
-    id: "meta-llama/llama-3.2-3b-instruct:free", 
-    name: "🦙 Llama 3.2 3B (سريع + مجاني)", 
+  // 🆓 نماذج مجانية تماماً (تعمل حالياً على OpenRouter)
+  "llama-3.2-1b": { 
+    id: "meta-llama/llama-3.2-1b-instruct:free", 
+    name: "🦙 Llama 3.2 1B (أسرع + مجاني)", 
     provider: "openrouter" 
   },
-  "llama-3.1-8b": { 
-    id: "meta-llama/llama-3.1-8b-instruct:free", 
-    name: "🦙 Llama 3.1 8B (متوازن + مجاني)", 
+  "llama-3.2-3b": { 
+    id: "meta-llama/llama-3.2-3b-instruct", 
+    name: "🦙 Llama 3.2 3B (متوازن - حد يومي مجاني)", 
     provider: "openrouter" 
   },
   "qwen-2.5-7b": { 
-    id: "qwen/qwen-2.5-7b-instruct:free", 
-    name: "🇨🇳 Qwen 2.5 7B (عربي ممتاز + مجاني)", 
+    id: "qwen/qwen-2.5-7b-instruct", 
+    name: "🇨🇳 Qwen 2.5 7B (عربي ممتاز - حد يومي)", 
     provider: "openrouter" 
   },
-  "gemma-2-9b": { 
-    id: "google/gemma-2-9b-it:free", 
-    name: "✨ Gemma 2 9B (جوجل + مجاني)", 
+  "gemma-2-2b": { 
+    id: "google/gemma-2-2b-it:free", 
+    name: "✨ Gemma 2 2B (جوجل + مجاني)", 
     provider: "openrouter" 
   },
   
-  // 💎 نماذج مدفوعة (اختياري - لها حدود مجانية يومية)
+  // 💎 نماذج قوية بحدود يومية مجانية (تتطلب رصيد $0)
   "llama-3.3-70b": { 
     id: "meta-llama/llama-3.3-70b-instruct", 
-    name: "🚀 Llama 3.3 70B (أقوى)", 
+    name: "🚀 Llama 3.3 70B (أقوى - حدود يومية)", 
     provider: "openrouter" 
+  },
+  "mistral-7b": {
+    id: "mistralai/mistral-7b-instruct:free",
+    name: "🌪️ Mistral 7B (مجاني)",
+    provider: "openrouter"
   },
   
   // 🔄 دعم جوجل كخيار احتياطي
   "gemini-1.5-flash": { 
     id: "google/gemini-1.5-flash-latest", 
-    name: "✨ Gemini 1.5 Flash", 
+    name: "✨ Gemini 1.5 Flash (جوجل)", 
     provider: "google" 
   },
 };
 
-// ✅ نماذج الصور (مجانية)
+// ✅ نماذج الصور (مجانية عبر Pollinations)
 export const imageModels = [
   { id: "flux-pro", name: "💎 Flux Pro (جودة عالية)", provider: "pollinations" },
   { id: "nano-banana", name: "🍌 Nano Banana 2 (سريع)", provider: "pollinations" },
@@ -71,47 +76,57 @@ export const googleClient = process.env.GEMINI_API_KEY
     })
   : null;
 
-// ✅ دالة توليد الرد (دعم متعدد المزودين)
+// ✅ دالة توليد الرد (دعم متعدد المزودين مع معالجة أخطاء 404)
 export async function generateAIResponse(
   messages: any[],
-  modelId: string = "llama-3.2-3b"
+  modelId: string = "llama-3.2-1b"
 ) {
   const model = chatModels[modelId as keyof typeof chatModels];
   if (!model) {
     throw new Error(`النموذج "${modelId}" غير مدعوم`);
   }
 
-  // 🔄 توجيه الطلب للمزود الصحيح
-  if (model.provider === "openrouter") {
-    const response = await openrouterClient.chat.completions.create({
-      model: model.id,
-      messages: messages.map((m: any) => ({
-        role: m.role,
-        content: m.content,
-      })),
-      temperature: 0.9,
-      max_tokens: 4096,
-    });
-    return response.choices[0].message.content || "";
-  }
-  
-  if (model.provider === "google" && googleClient) {
-    const response = await googleClient.chat.completions.create({
-      model: model.id,
-      messages: messages.map((m: any) => ({
-        role: m.role,
-        content: m.content,
-      })),
-      temperature: 0.9,
-      max_tokens: 4096,
-    });
-    return response.choices[0].message.content || "";
-  }
+  try {
+    // 🔄 توجيه الطلب للمزود الصحيح
+    if (model.provider === "openrouter") {
+      const response = await openrouterClient.chat.completions.create({
+        model: model.id,
+        messages: messages.map((m: any) => ({
+          role: m.role,
+          content: m.content,
+        })),
+        temperature: 0.9,
+        max_tokens: 4096,
+      });
+      return response.choices[0].message.content || "";
+    }
+    
+    if (model.provider === "google" && googleClient) {
+      const response = await googleClient.chat.completions.create({
+        model: model.id,
+        messages: messages.map((m: any) => ({
+          role: m.role,
+          content: m.content,
+        })),
+        temperature: 0.9,
+        max_tokens: 4096,
+      });
+      return response.choices[0].message.content || "";
+    }
 
-  throw new Error(`فشل في الاتصال بمزود "${model.provider}"`);
+    throw new Error(`فشل في الاتصال بمزود "${model.provider}"`);
+    
+  } catch (error: any) {
+    // ✅ معالجة أخطاء 404 الخاصة بالنماذج غير الموجودة
+    if (error.status === 404 && error.message?.includes("No endpoints found")) {
+      throw new Error(`النموذج "${model.name}" غير متاح حالياً. جرب نموذجاً آخر.`);
+    }
+    // ✅ إعادة رمي الأخطاء الأخرى
+    throw error;
+  }
 }
 
-// ✅ دوال الصور والفيديو (كما هي - تعمل جيداً)
+// ✅ دوال الصور والفيديو (مجانية)
 export async function generatePollinationsImage(prompt: string, model: string = "flux") {
   const seed = Math.floor(Math.random() * 1000000);
   return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${model}&seed=${seed}&width=1024&height=1024&nologo=true`;
