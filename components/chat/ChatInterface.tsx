@@ -232,12 +232,11 @@ export default function ChatInterface() {
               >
                 {/* Chat Models */}
                 {selectedMode === "chat" && (
-                  <>
-                    <option value="gemini-2.0-flash">✨ Gemini 2.0 Flash (الأسرع والأذكى)</option>
-                    <option value="gemini-2.0-flash-thinking-exp">🧠 Gemini 2.0 Flash Thinking</option>
-                    <option value="gemini-1.5-flash">⚡ Gemini 1.5 Flash (بديل)</option>
-                  </>
-                )}
+  <>
+    <option value="gemini-1.5-flash">✨ Gemini 1.5 Flash (سريع + مجاني)</option>
+    <option value="gemini-1.5-pro">🧠 Gemini 1.5 Pro (أذكى - 2 طلب/دقيقة)</option>
+  </>
+)}
                 {/* Image Models */}
                 {selectedMode === "image" && (
                   <>
