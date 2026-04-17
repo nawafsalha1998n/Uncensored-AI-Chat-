@@ -231,11 +231,18 @@ export default function ChatInterface() {
               >
                 {/* Chat Models */}
                 {selectedMode === "chat" && (
-                  <>
-                    <option value="gemini-1.5-flash">✨ Gemini 1.5 Flash (سريع + مجاني)</option>
-                    <option value="gemini-1.5-pro">🧠 Gemini 1.5 Pro (أذكى - 2 طلب/دقيقة)</option>
-                  </>
-                )}
+  <>
+    {/* 🆓 نماذج مجانية تماماً */}
+    <option value="llama-3.2-3b">🦙 Llama 3.2 3B (سريع + مجاني)</option>
+    <option value="qwen-2.5-7b">🇨🇳 Qwen 2.5 7B (عربي ممتاز + مجاني)</option>
+    <option value="gemma-2-9b">✨ Gemma 2 9B (جوجل + مجاني)</option>
+    <option value="llama-3.1-8b">🦙 Llama 3.1 8B (متوازن + مجاني)</option>
+    
+    {/* 💎 نماذج متقدمة (قد تكون لها حدود) */}
+    <option value="llama-3.3-70b">🚀 Llama 3.3 70B (أقوى - حدود يومية)</option>
+    <option value="gemini-1.5-flash">✨ Gemini 1.5 Flash (جوجل)</option>
+  </>
+)}
                 {/* Image Models */}
                 {selectedMode === "image" && (
                   <>
