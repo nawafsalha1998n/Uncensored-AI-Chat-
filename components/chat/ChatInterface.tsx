@@ -12,7 +12,10 @@ export default function ChatInterface() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedMode, setSelectedMode] = useState<Mode>("chat");
-  const [selectedModel, setSelectedModel] = useState("llama-3.2-1b");تم التصحيح
+  
+  // ✅ تم تغيير القيمة الافتراضية إلى Llama 3.3 70B لأنه يعمل لديك
+  const [selectedModel, setSelectedModel] = useState("llama-3.3-70b");
+  
   const [previewMedia, setPreviewMedia] = useState<{ url: string; type: "image" | "video" } | null>(null);
   const [isCopying, setIsCopying] = useState(false);
   
@@ -229,23 +232,18 @@ export default function ChatInterface() {
                 onChange={(e) => setSelectedModel(e.target.value)}
                 className="bg-transparent text-xs font-medium text-zinc-400 outline-none cursor-pointer hover:text-zinc-200 w-full"
               >
-                {/* Chat Models */}
-              {selectedMode === "chat" && (
-  <>
-    {/* 🆓 نماذج مجانية تماماً - تعمل حالياً */}
-    <option value="llama-3.2-1b">🦙 Llama 3.2 1B (أسرع + مجاني)</option>
-    <option value="gemma-2-2b">✨ Gemma 2 2B (جوجل + مجاني)</option>
-    <option value="mistral-7b">🌪️ Mistral 7B (مجاني)</option>
-    
-    {/* 💎 نماذج بحدود يومية مجانية (تتطلب رصيد $0) */}
-    <option value="llama-3.2-3b">🦙 Llama 3.2 3B (متوازن - حد يومي)</option>
-    <option value="qwen-2.5-7b">🇨🇳 Qwen 2.5 7B (عربي - حد يومي)</option>
-    <option value="llama-3.3-70b">🚀 Llama 3.3 70B (أقوى - حد يومي)</option>
-    
-    {/* 🔄 خيار جوجل الاحتياطي */}
-    <option value="gemini-1.5-flash">✨ Gemini 1.5 Flash (جوجل)</option>
-  </>
-)}
+                {/* Chat Models - محدثة لتطابق lib/ai.ts */}
+                {selectedMode === "chat" && (
+                  <>
+                    <option value="llama-3.2-1b">🦙 Llama 3.2 1B (أسرع + مجاني)</option>
+                    <option value="gemma-2-2b">✨ Gemma 2 2B (جوجل + مجاني)</option>
+                    <option value="mistral-7b">🌪️ Mistral 7B (مجاني)</option>
+                    <option value="llama-3.2-3b">🦙 Llama 3.2 3B (متوازن - حد يومي)</option>
+                    <option value="qwen-2.5-7b">🇨 Qwen 2.5 7B (عربي - حد يومي)</option>
+                    <option value="llama-3.3-70b">🚀 Llama 3.3 70B (أقوى - حد يومي)</option>
+                    <option value="gemini-1.5-flash">✨ Gemini 1.5 Flash (جوجل)</option>
+                  </>
+                )}
                 {/* Image Models */}
                 {selectedMode === "image" && (
                   <>
