@@ -1,25 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateAIResponse } from "@/lib/ai";
 import { getOrCreateUser } from "@/lib/clerk-prisma";
 import { prisma } from "@/lib/db";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export async function POST(request: NextRequest) {
   try {
-    const { messages, isUncensored = true, chatId, model = "llama3" } = await request.json();
+    const { messages, chatId, model = "gemini-2.0-flash" } = await request.json();
 
-    // التحقق من صحة البيانات
-    if (!messages || !Array.isArray(messages) || messages.length === 0) {
-      return NextResponse.json(
-        { error: "الرسائل مطلوبة وجب أن تكون مصفوفة غير فارغة" },
-        { status: 400 }
-      );
+    if (!messages || !Array.isArray(messages)) {
+      return NextResponse.json({ error: "الرسائل مطلوبة" }, { status: 400 });
     }
 
     const user = await getOrCreateUser();
-
     let currentChatId = chatId;
 
-    // إنشاء محادثة جديدة لو مفيش chatId
     if (!currentChatId) {
       const chat = await prisma.chat.create({
         data: {
@@ -30,7 +24,6 @@ export async function POST(request: NextRequest) {
       currentChatId = chat.id;
     }
 
-    // حفظ رسالة المستخدم الأخيرة
     const lastMessage = messages[messages.length - 1];
     if (lastMessage?.role === "user") {
       await prisma.message.create({
@@ -38,39 +31,51 @@ export async function POST(request: NextRequest) {
           role: "user",
           content: lastMessage.content,
           chatId: currentChatId,
-          isUncensored,
+          modelUsed: model,
+          isUncensored: true,
         },
       });
     }
 
-    // توليد الرد
-    const aiResponse = await generateAIResponse(
-      messages,
-      user.id,
-      isUncensored,
-      model
-    );
+    // --- Google Gemini Logic ---
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+    const genModel = genAI.getGenerativeModel({ model: model });
+    
+    // تحويل الرسائل لتنسيق Gemini
+    // Gemini لا يدعم system prompt مباشر في بعض الموديلات، لذا ندمجه
+    const chatInstance = genModel.startChat({
+      history: messages.slice(0, -1).map((m: any) => ({
+        role: m.role === 'user' ? 'user' : 'model',
+        parts: [{ text: m.content }],
+      })),
+      generationConfig: {
+        maxOutputTokens: 4096,
+        temperature: 0.9, // إبداع أعلى للدردشة
+      },
+    });
 
-    // حفظ رد الـ AI
+    const result = await chatInstance.sendMessage(lastMessage.content);
+    const aiResponse = result.response.text();
+
     await prisma.message.create({
       data: {
         role: "assistant",
         content: aiResponse,
         chatId: currentChatId,
-        isUncensored,
-        modelUsed: model || "llama3",
+        modelUsed: model,
+        isUncensored: true,
       },
     });
 
     return NextResponse.json({
       content: aiResponse,
       chatId: currentChatId,
-      model: model || "llama3",
     });
+
   } catch (error: any) {
     console.error("❌ Chat Error:", error);
     return NextResponse.json(
-      { error: error.message || "حدث خطأ في الرد" },
+      { error: error.message || "فشل في الرد" },
       { status: 500 }
     );
   }
