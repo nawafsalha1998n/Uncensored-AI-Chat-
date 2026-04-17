@@ -10,7 +10,7 @@ export async function POST(req: Request) {
 if (model === "nano-banana" || model === "perchance") {
   const seed = Math.floor(Math.random() * 1000000);
   // استخدام رابط مباشر يعمل فوراً
-  imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${model === 'nano-banana' ? 'flux' : 'any'}&seed=${seed}&width=1024&height=1024&nologo=true&enhance=true`;
+  imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${model === 'nano-banana' ? 'flux' : 'any'}&seed=${seed}&width=1536&height=1536&nologo=true&enhance=true`;
   
   // التحقق من أن الرابط يعمل
   try {
