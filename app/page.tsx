@@ -1,67 +1,63 @@
-"use client";
-
-import { useAuth, UserButton, SignInButton } from "@clerk/nextjs";
 import Link from "next/link";
+import { MessageSquare, Image as ImageIcon, Video, History } from "lucide-react";
 
 export default function Home() {
-  const { isSignedIn, isLoaded } = useAuth();
-
-  if (!isLoaded) {
-    return (
-      <main className="min-h-screen bg-gradient-to-br from-zinc-950 to-black flex items-center justify-center p-4">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl flex items-center justify-center mb-4 text-4xl mx-auto">🤖</div>
-          <p className="text-zinc-400">جاري التحميل...</p>
-        </div>
-      </main>
-    );
-  }
-
   return (
-    <main className="min-h-screen bg-gradient-to-br from-zinc-950 to-black flex items-center justify-center p-4">
-      <div className="max-w-2xl w-full">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center text-2xl">🤖</div>
-            <h1 className="text-3xl font-bold tracking-tight">AI Uncensored</h1>
-          </div>
-          <div className="flex items-center gap-4">
-            {isSignedIn && <UserButton />}
-            {!isSignedIn && (
-              <SignInButton mode="modal">
-                <button className="px-6 py-2.5 bg-white text-black font-medium rounded-2xl hover:bg-white/90 transition">
-                  تسجيل الدخول
-                </button>
-              </SignInButton>
-            )}
-          </div>
+    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+      <div className="max-w-4xl w-full space-y-8">
+        <div className="text-center space-y-4">
+          <h1 className="text-5xl font-black bg-gradient-to-r from-purple-400 via-pink-500 to-purple-600 bg-clip-text text-transparent">
+            AI Uncensored Pro
+          </h1>
+          <p className="text-zinc-400 text-lg">اختر نوع المحتوى للبدء</p>
         </div>
 
-        {/* Glass Card */}
-        <div className="glass rounded-3xl p-10 text-center">
-          <h2 className="text-5xl font-bold mb-4">مرحباً بك في شات الذكاء الاصطناعي</h2>
-          <p className="text-xl text-zinc-400 mb-8">
-            دردشة • توليد صور • توليد فيديوهات<br />
-            <span className="text-purple-400">بدون رقابة للأعمار 18+</span>
-          </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* دردشة نصية */}
+          <Link href="/chat" className="group">
+            <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 hover:border-purple-500/50 hover:bg-zinc-900 transition-all duration-300">
+              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <MessageSquare className="w-7 h-7 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">دردشة نصية</h3>
+              <p className="text-zinc-400 text-sm">تحدث مع AI بحرية تامة</p>
+              <p className="text-zinc-500 text-xs mt-2">📅 تحفظ لمدة 15 يوم</p>
+            </div>
+          </Link>
 
-          {isSignedIn ? (
-            <Link
-              href="/chat"
-              className="inline-flex items-center justify-center px-10 py-4 bg-white text-black font-semibold text-lg rounded-3xl hover:scale-105 transition"
-            >
-              ابدأ الدردشة الآن →
-            </Link>
-          ) : (
-            <p className="text-sm text-zinc-500">سجل دخول لتجربة الميزات كاملة</p>
-          )}
+          {/* توليد الصور */}
+          <Link href="/images" className="group">
+            <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 hover:border-purple-500/50 hover:bg-zinc-900 transition-all duration-300">
+              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <ImageIcon className="w-7 h-7 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">توليد الصور</h3>
+              <p className="text-zinc-400 text-sm">أنشئ صوراً احترافية</p>
+              <p className="text-zinc-500 text-xs mt-2">📅 تحفظ لمدة أسبوع</p>
+            </div>
+          </Link>
+
+          {/* توليد الفيديو */}
+          <Link href="/videos" className="group">
+            <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 hover:border-purple-500/50 hover:bg-zinc-900 transition-all duration-300">
+              <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <Video className="w-7 h-7 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">توليد الفيديو</h3>
+              <p className="text-zinc-400 text-sm">فيديوهات AI مذهلة</p>
+              <p className="text-zinc-500 text-xs mt-2">📅 تحفظ لمدة أسبوع</p>
+            </div>
+          </Link>
         </div>
 
-        <p className="text-center text-xs text-zinc-500 mt-8">
-          مدعوم بـ Groq + Together.ai + Fal.ai + Vercel
-        </p>
+        {/* سجل المحادثات */}
+        <div className="mt-12">
+          <Link href="/history" className="flex items-center gap-3 text-zinc-400 hover:text-white transition">
+            <History className="w-5 h-5" />
+            <span>سجل المحادثات</span>
+          </Link>
+        </div>
       </div>
-    </main>
+    </div>
   );
 }
