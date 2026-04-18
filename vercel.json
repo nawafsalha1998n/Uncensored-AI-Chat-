@@ -1,4 +1,8 @@
 {
-  "buildCommand": "pnpm install --no-frozen-lockfile && prisma generate && next build",
-  "installCommand": "pnpm install --no-frozen-lockfile"
+  "crons": [
+    {
+      "path": "/api/cleanup",
+      "schedule": "0 * * * *"
+    }
+  ]
 }
