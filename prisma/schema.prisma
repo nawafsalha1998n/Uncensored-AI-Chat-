@@ -25,11 +25,13 @@ model User {
 model Chat {
   id          String    @id @default(cuid())
   title       String?
+  chatType    String    @default("text") // "text", "image", "video"
   userId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages    Message[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  expiresAt   DateTime?
 }
 
 model Message {
