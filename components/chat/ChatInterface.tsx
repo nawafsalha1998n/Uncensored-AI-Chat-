@@ -13,7 +13,7 @@ export default function ChatInterface() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedMode, setSelectedMode] = useState<Mode>("chat");
   
-  // ✅ تم تغيير القيمة الافتراضية إلى Llama 3.3 70B لأنه يعمل لديك
+  // ✅ النموذج الافتراضي الذي يعمل لديك
   const [selectedModel, setSelectedModel] = useState("llama-3.3-70b");
   
   const [previewMedia, setPreviewMedia] = useState<{ url: string; type: "image" | "video" } | null>(null);
@@ -52,7 +52,7 @@ export default function ChatInterface() {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(blobUrl);
-      toast.success("تم بدء التحميل");
+      toast.success("بدأ التحميل...");
     } catch (error) {
       window.open(url, '_blank');
     }
@@ -114,7 +114,7 @@ export default function ChatInterface() {
   return (
     <div className="h-screen bg-zinc-950 flex flex-col overflow-hidden text-zinc-100 selection:bg-purple-500/30">
       
-      {/* Header احترافي */}
+      {/* Header */}
       <header className="flex-none border-b border-zinc-800/50 bg-zinc-950/80 backdrop-blur-md px-4 py-3 flex items-center justify-between z-20 sticky top-0">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center shadow-lg shadow-purple-500/20">
@@ -179,9 +179,19 @@ export default function ChatInterface() {
               <div className={cn("p-3 sm:p-4 text-sm leading-relaxed whitespace-pre-wrap", msg.role === "user" ? "" : "")}>
                 {msg.content && <p>{msg.content}</p>}
                 
+                {/* ✅ عرض الصور مع تحسينات */}
                 {msg.imageUrl && (
-                  <div className="mt-3 rounded-xl overflow-hidden border border-zinc-800/50 shadow-2xl relative group/img">
-                    <img src={msg.imageUrl} className="w-full h-auto max-h-[500px] object-contain bg-zinc-900 cursor-pointer" onClick={() => setPreviewMedia({ url: msg.imageUrl, type: "image" })} />
+                  <div className="mt-3 rounded-xl overflow-hidden border border-zinc-800/50 shadow-2xl relative group/img bg-zinc-900">
+                    <img 
+                      src={msg.imageUrl} 
+                      alt="AI Generated Image"
+                      className="w-full h-auto max-h-[500px] object-contain cursor-pointer" 
+                      onClick={() => setPreviewMedia({ url: msg.imageUrl, type: "image" })}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%2318181b' width='400' height='400'/%3E%3Ctext fill='%2371717a' font-family='sans-serif' font-size='16' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3EFailed to load image%3C/text%3E%3C/svg%3E";
+                      }}
+                    />
                     <div className="absolute bottom-2 right-2 flex gap-2 opacity-0 group-hover/img:opacity-100 transition-opacity">
                       <button onClick={() => handleDownload(msg.imageUrl, `image-${Date.now()}.png`)} className="p-1.5 bg-black/60 backdrop-blur rounded-md hover:bg-black/80 text-white"><Check className="w-4 h-4" /></button>
                       <button onClick={() => setPreviewMedia({ url: msg.imageUrl, type: "image" })} className="p-1.5 bg-black/60 backdrop-blur rounded-md hover:bg-black/80 text-white"><ExternalLink className="w-4 h-4" /></button>
@@ -220,31 +230,29 @@ export default function ChatInterface() {
         <div ref={scrollRef} />
       </div>
 
-      {/* Input Area - Floating & Modern */}
+      {/* Input Area */}
       <div className="flex-none p-4 sm:p-6 bg-gradient-to-t from-zinc-950 via-zinc-950 to-transparent pt-12">
         <div className="max-w-3xl mx-auto relative">
           <div className="bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-3xl p-2 shadow-2xl ring-1 ring-white/5 focus-within:ring-purple-500/30 focus-within:border-purple-500/30 transition-all">
             
-            {/* Model Selector Pill */}
+            {/* Model Selector */}
             <div className="px-2 pb-2 border-b border-zinc-800/50 mb-2">
               <select
                 value={selectedModel}
                 onChange={(e) => setSelectedModel(e.target.value)}
                 className="bg-transparent text-xs font-medium text-zinc-400 outline-none cursor-pointer hover:text-zinc-200 w-full"
               >
-                {/* Chat Models - محدثة لتطابق lib/ai.ts */}
                 {selectedMode === "chat" && (
                   <>
+                    <option value="llama-3.3-70b">🚀 Llama 3.3 70B (أقوى - حد يومي)</option>
                     <option value="llama-3.2-1b">🦙 Llama 3.2 1B (أسرع + مجاني)</option>
                     <option value="gemma-2-2b">✨ Gemma 2 2B (جوجل + مجاني)</option>
                     <option value="mistral-7b">🌪️ Mistral 7B (مجاني)</option>
-                    <option value="llama-3.2-3b">🦙 Llama 3.2 3B (متوازن - حد يومي)</option>
-                    <option value="qwen-2.5-7b">🇨 Qwen 2.5 7B (عربي - حد يومي)</option>
-                    <option value="llama-3.3-70b">🚀 Llama 3.3 70B (أقوى - حد يومي)</option>
+                    <option value="llama-3.2-3b">🦙 Llama 3.2 3B (متوازن)</option>
+                    <option value="qwen-2.5-7b">🇨🇳 Qwen 2.5 7B (عربي)</option>
                     <option value="gemini-1.5-flash">✨ Gemini 1.5 Flash (جوجل)</option>
                   </>
                 )}
-                {/* Image Models */}
                 {selectedMode === "image" && (
                   <>
                     <option value="flux-pro">💎 Flux Pro (جودة عالية جداً)</option>
@@ -252,7 +260,6 @@ export default function ChatInterface() {
                     <option value="perchance">✨ Perchance (فني)</option>
                   </>
                 )}
-                {/* Video Models */}
                 {selectedMode === "video" && (
                   <>
                     <option value="zsky-video">🎬 Zsky AI (مجاني)</option>
