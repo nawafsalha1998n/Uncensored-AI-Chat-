@@ -4,41 +4,31 @@ export async function POST(req: Request) {
   try {
     const { prompt, model } = await req.json();
     
+    // 1. التحقق من المدخلات
     if (!prompt) {
       return NextResponse.json({ error: "الوصف مطلوب" }, { status: 400 });
     }
 
-    let imageUrl: string;
+    // ✅ الحل: تعريف المتغير بقيمة ابتدائية لتجنب خطأ TypeScript
+    let imageUrl: string | undefined = undefined;
 
-    // 🎨 جميع النماذج تستخدم Pollinations (مجاني وموثوق)
+    // 🎨 توليد الصورة عبر Pollinations (مجاني وسريع)
+    // استخدام نموذج Flux لجميع الخيارات لضمان أعلى جودة واستقرار
     if (model === "flux-pro" || model === "nano-banana" || model === "perchance" || !model) {
       const seed = Math.floor(Math.random() * 1000000);
       const width = 1024;
       const height = 1024;
       
-      // استخدام نموذج Flux (الأفضل حالياً)
-      const modelName = model === 'perchance' ? 'flux' : 'flux';
-      
-      imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${modelName}&seed=${seed}&width=${width}&height=${height}&nologo=true&enhance=true`;
-      
-      // التحقق من أن الرابط صالح (اختياري)
-      try {
-        const testResponse = await fetch(imageUrl, { method: 'HEAD', cache: 'no-store' });
-        if (!testResponse.ok) {
-          // محاولة ثانية بدون enhance
-          imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?seed=${seed}&width=${width}&height=${height}&nologo=true`;
-        }
-      } catch (e) {
-        console.log("Pollinations fallback applied");
-      }
+      // رابط مباشر وسريع
+      imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=flux&seed=${seed}&width=${width}&height=${height}&nologo=true&enhance=true`;
     }
 
+    // 2. التحقق من نجاح التوليد
     if (!imageUrl) {
-      return NextResponse.json({ error: "فشل في توليد الصورة" }, { status: 500 });
+      return NextResponse.json({ error: "فشل في توليد الصورة: نموذج غير مدعوم" }, { status: 500 });
     }
 
-    console.log("✅ Image URL generated:", imageUrl);
-    
+    // 3. إرجاع الرابط
     return NextResponse.json({ 
       imageUrl,
       content: "✅ تم توليد الصورة بنجاح"
