@@ -246,9 +246,9 @@ export default function ChatInterface() {
                   <>
                     <option value="llama-3.3-70b">🚀 Llama 3.3 70B (أقوى - حد يومي)</option>
                     <option value="llama-3.2-1b">🦙 Llama 3.2 1B (أسرع + مجاني)</option>
-                    <option value="gemma-2-2b">✨ Gemma 2 2B (جوجل + مجاني)</option>
-                    <option value="mistral-7b">🌪️ Mistral 7B (مجاني)</option>
-                    <option value="llama-3.2-3b">🦙 Llama 3.2 3B (متوازن)</option>
+                    <option value="deepseek-chat">🧠 DeepSeek Chat (مجاني)</option>
+                    <option value="cohere-command-r-plus">🤖 Cohere Command R+ (مجاني)</option>
+                    <option value="cohere-command-r">🤖 Cohere Command R (مجاني)</option>
                     <option value="qwen-2.5-7b">🇨🇳 Qwen 2.5 7B (عربي)</option>
                     <option value="gemini-1.5-flash">✨ Gemini 1.5 Flash (جوجل)</option>
                   </>

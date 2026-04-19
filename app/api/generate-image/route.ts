@@ -19,7 +19,8 @@ export async function POST(req: Request) {
     if (model === "nano-banana") modelName = "flux";
     if (model === "flux-pro") modelName = "flux";
 
-    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${modelName}&seed=${seed}&width=${width}&height=${height}&nologo=true&enhance=true`;
+    const timestamp = Date.now();
+    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${modelName}&seed=${seed}&width=${width}&height=${height}&nologo=true&enhance=true&t=${timestamp}`;
 
     return NextResponse.json({ 
       imageUrl,

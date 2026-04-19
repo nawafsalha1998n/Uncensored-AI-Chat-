@@ -36,6 +36,21 @@ export const chatModels = {
     name: "🌪️ Mistral 7B (مجاني)",
     provider: "openrouter"
   },
+  "deepseek-chat": {
+    id: "deepseek/deepseek-chat:free",
+    name: "🧠 DeepSeek Chat (مجاني)",
+    provider: "openrouter"
+  },
+  "cohere-command-r-plus": {
+    id: "cohere/command-r-plus",
+    name: "🤖 Cohere Command R+ (مجاني - كولاد)",
+    provider: "cohere"
+  },
+  "cohere-command-r": {
+    id: "cohere/command-r",
+    name: "🤖 Cohere Command R (مجاني - كولاد)",
+    provider: "cohere"
+  },
   
   // 🔄 دعم جوجل كخيار احتياطي
   "gemini-1.5-flash": { 
@@ -73,6 +88,14 @@ export const googleClient = process.env.GEMINI_API_KEY
   ? new OpenAI({
       baseURL: "https://generativelanguage.googleapis.com/v1beta/openai",
       apiKey: process.env.GEMINI_API_KEY,
+    })
+  : null;
+
+// ✅ عميل Cohere
+export const cohereClient = process.env.COHERE_API_KEY
+  ? new OpenAI({
+      baseURL: "https://api.cohere.ai/v1",
+      apiKey: process.env.COHERE_API_KEY,
     })
   : null;
 
@@ -114,7 +137,18 @@ export async function generateAIResponse(
       return response.choices[0].message.content || "";
     }
 
-    throw new Error(`فشل في الاتصال بمزود "${model.provider}"`);
+    if (model.provider === "cohere" && cohereClient) {
+      const response = await cohereClient.chat.completions.create({
+        model: model.id,
+        messages: messages.map((m: any) => ({
+          role: m.role,
+          content: m.content,
+        })),
+      });
+      return response.choices[0].message.content || "";
+    }
+
+    throw new Error(`فشل في الاتصال بمزود "${model.provider}" (تأكد من وجود API KEY)`);
     
   } catch (error: any) {
     // ✅ معالجة أخطاء 404 الخاصة بالنماذج غير الموجودة
@@ -129,7 +163,8 @@ export async function generateAIResponse(
 // ✅ دوال الصور والفيديو (مجانية)
 export async function generatePollinationsImage(prompt: string, model: string = "flux") {
   const seed = Math.floor(Math.random() * 1000000);
-  return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${model}&seed=${seed}&width=1024&height=1024&nologo=true`;
+  const timestamp = Date.now();
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${model}&seed=${seed}&width=1024&height=1024&nologo=true&t=${timestamp}`;
 }
 
 export async function generateZskyVideo(prompt: string) {
