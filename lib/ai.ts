@@ -1,5 +1,6 @@
 // ✅ الاستيرادات
 import { OpenAI } from "openai";
+import { CohereClientV2 } from "cohere-ai";
 
 // ✅ نماذج الدردشة - بأسماء صحيحة ومحدثة لـ OpenRouter
 export const chatModels = {
@@ -37,18 +38,18 @@ export const chatModels = {
     provider: "openrouter"
   },
   "deepseek-chat": {
-    id: "deepseek/deepseek-chat:free",
+    id: "deepseek/deepseek-r1",
     name: "🧠 DeepSeek Chat (مجاني)",
     provider: "openrouter"
   },
   "cohere-command-r-plus": {
-    id: "cohere/command-r-plus",
-    name: "🤖 Cohere Command R+ (مجاني - كولاد)",
+    id: "command-r-plus",
+    name: "🤖 Cohere Command R+ (مجاني)",
     provider: "cohere"
   },
   "cohere-command-r": {
-    id: "cohere/command-r",
-    name: "🤖 Cohere Command R (مجاني - كولاد)",
+    id: "command-r",
+    name: "🤖 Cohere Command R (مجاني)",
     provider: "cohere"
   },
   
@@ -91,11 +92,10 @@ export const googleClient = process.env.GEMINI_API_KEY
     })
   : null;
 
-// ✅ عميل Cohere
+// ✅ عميل Cohere - الصحيح
 export const cohereClient = process.env.COHERE_API_KEY
-  ? new OpenAI({
-      baseURL: "https://api.cohere.ai/v1",
-      apiKey: process.env.COHERE_API_KEY,
+  ? new CohereClientV2({
+      token: process.env.COHERE_API_KEY,
     })
   : null;
 
@@ -138,14 +138,14 @@ export async function generateAIResponse(
     }
 
     if (model.provider === "cohere" && cohereClient) {
-      const response = await cohereClient.chat.completions.create({
+      const response = await cohereClient.chat.create({
         model: model.id,
         messages: messages.map((m: any) => ({
-          role: m.role,
+          role: m.role === "user" ? "user" : "assistant",
           content: m.content,
         })),
       });
-      return response.choices[0].message.content || "";
+      return response.message.content[0]?.text || "";
     }
 
     throw new Error(`فشل في الاتصال بمزود "${model.provider}" (تأكد من وجود API KEY)`);
